@@ -678,7 +678,7 @@ tbody td{padding:9px 10px;white-space:nowrap;}
     <div class="tbl-wrap">
       <table>
         <thead>
-          <tr>
+          <tr id="admin-thead-tr">
             <th>NO</th><th>사번</th><th>성명</th><th>사업부</th><th>팀</th>
             <th>직위</th><th>현재 직무급</th><th>도전 가능 직무</th>
             <th>2023</th><th>2024</th><th>2025</th>
@@ -692,6 +692,11 @@ tbody td{padding:9px 10px;white-space:nowrap;}
 
   <!-- 탭: 직책자 관리 -->
   <div id="admin-panel-mgr" style="display:none;">
+    <!-- 구글시트 동기화 안내 배너 -->
+    <div style="background:#eff6ff;border:1.5px solid #bae6fd;border-radius:12px;padding:12px 18px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+      <span style="font-size:12px;color:var(--navy);font-weight:600;">📋 구글시트 <b>'직책자'</b> 시트와 자동 동기화됩니다. 시트를 수정하면 페이지 새로고침 시 반영됩니다.</span>
+      <button onclick="fetchMgrData()" style="background:linear-gradient(135deg,var(--sky-d),var(--blue));color:#fff;border:none;padding:6px 14px;border-radius:8px;font-size:12px;cursor:pointer;font-family:inherit;font-weight:700;">🔄 지금 동기화</button>
+    </div>
     <!-- 액션 바 -->
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px;">
       <span style="font-size:13px;font-weight:700;color:var(--navy);">직책자 목록 <span id="mgr-count-badge" style="font-size:11px;color:var(--gray-400);font-weight:500;"></span></span>
@@ -783,7 +788,7 @@ tbody td{padding:9px 10px;white-space:nowrap;}
   <div class="tbl-wrap">
     <table>
       <thead>
-        <tr>
+        <tr id="mgr-thead-tr">
           <th>사번</th><th>성명</th><th>사업부</th><th>팀</th><th>직위</th>
           <th>현재 직무급</th><th>도전 가능 직무</th>
           <th>2023</th><th>2024</th><th>2025</th>
@@ -1000,6 +1005,7 @@ tbody td{padding:9px 10px;white-space:nowrap;}
    DATA
 ════════════════════════════════════ */
 var DATA = [];
+var DATA_HEADERS = []; /* 지원현황 시트 헤더 (동적 컬럼용) */
 
 /* ════ 변화혁신사례 필요 직무급 ════ */
 var INNOV = ['잡매니저-어쏘','잡매니저-멘토','잡매니저-매니저','팀장-어쏘','팀장-멘토','팀장-매니저'];
@@ -1026,15 +1032,16 @@ var ACCESS_LOG = []; // {time, type, sabun, name, dept, team, result}
 var TODAY = new Date().toISOString().slice(0,10);
 
 function addLog(type, sabun, name, dept, team, result){
-  ACCESS_LOG.unshift({
+  var entry = {
     time: new Date().toLocaleString('ko-KR'),
     date: new Date().toISOString().slice(0,10),
     type: type, sabun: sabun, name: name,
     dept: dept||'', team: team||'', result: result||''
-  });
+  };
+  ACCESS_LOG.unshift(entry);
   if(ACCESS_LOG.length > 200) ACCESS_LOG.pop();
-  // 배지 업데이트
   document.getElementById('log-count-badge').textContent = ACCESS_LOG.length;
+  postAccessLog(entry); /* 구글시트 '접속현황' 시트에 누적 기록 */
 }
 
 /* ════ PAGE SYSTEM ════ */
@@ -1526,25 +1533,18 @@ function renderAdminTable(){
       &&(!dept||d.dept===dept)&&(!st||d.status===st);
   });
   document.getElementById('f-count').textContent='검색결과: '+rows.length+'명';
+  /* 동적 헤더: 시트 컬럼 그대로 사용, 없으면 기본값 */
+  var hdrs=DATA_HEADERS.length?DATA_HEADERS:['사번','성명','사업부','팀','직위','현재직무급','도전가능직무','2023','2024','2025','구분','도전직무','제출','비고'];
+  var theadTr=document.getElementById('admin-thead-tr');
+  if(theadTr){
+    theadTr.innerHTML='<th>NO</th>'+hdrs.map(function(h){return '<th>'+h+'</th>';}).join('')+'<th>수정</th>';
+  }
   var tb=document.getElementById('admin-tbody');
   tb.innerHTML=rows.map(function(d){
     var ri=DATA.indexOf(d);
     return '<tr>'
       +'<td style="color:var(--gray-400);">'+(d.no>0?d.no:'-')+'</td>'
-      +'<td style="font-weight:700;color:var(--sky-dd);">'+d.sabun+'</td>'
-      +'<td style="font-weight:800;">'+d.name+'</td>'
-      +'<td style="font-size:11px;color:var(--gray-600);">'+d.dept+'</td>'
-      +'<td style="font-size:11px;color:var(--gray-600);">'+d.team+'</td>'
-      +'<td>'+d.pos+'</td>'
-      +'<td style="font-size:11px;">'+(d.cur||'-')+'</td>'
-      +'<td style="font-size:11px;font-weight:700;color:var(--navy);">'+(d.target||'-')+'</td>'
-      +'<td>'+gradeChip(d.y23,d.y23)+'</td>'
-      +'<td>'+gradeChip(d.y24,d.y24)+'</td>'
-      +'<td>'+gradeChip(d.y25,d.y25)+'</td>'
-      +'<td>'+tagHTML(d.status)+'</td>'
-      +'<td style="font-size:11px;">'+(d.challenge||'-')+'</td>'
-      +'<td style="font-size:11px;text-align:center;">'+(d.submit||'-')+'</td>'
-      +'<td style="font-size:11px;max-width:160px;white-space:normal;color:var(--gray-600);">'+(d.note||'')+'</td>'
+      +hdrs.map(function(h){return _renderCell(h,d);}).join('')
       +'<td><button class="edit-btn" onclick="openEdit('+ri+')">수정</button></td>'
       +'</tr>';
   }).join('');
@@ -1684,24 +1684,20 @@ function renderMgrTable(){
     if(mgrTab==='re-eval')return d.status==='re-eval'||d.status==='review';
     return d.status===mgrTab;
   });
+  /* 직책자 뷰: 불필요한 컬럼(도전직무·제출·사원구분) 제외 */
+  var _skipMgr={'도전직무':1,'도전 직무':1,'제출':1,'제출여부':1,'제출 여부':1,'사원구분':1};
+  var hdrs=(DATA_HEADERS.length?DATA_HEADERS:['사번','성명','사업부','팀','직위','현재직무급','도전가능직무','2023','2024','2025','구분','비고'])
+    .filter(function(h){return !_skipMgr[h.trim()];});
+  var theadTr=document.getElementById('mgr-thead-tr');
+  if(theadTr) theadTr.innerHTML=hdrs.map(function(h){return '<th>'+h+'</th>';}).join('');
   var tb=document.getElementById('mgr-tbody');
-  if(!rows.length){tb.innerHTML='<tr><td colspan="12" style="text-align:center;padding:32px;color:var(--gray-400);font-size:13px;">해당 조건의 인원이 없습니다.</td></tr>';return;}
+  if(!rows.length){
+    tb.innerHTML='<tr><td colspan="'+hdrs.length+'" style="text-align:center;padding:32px;color:var(--gray-400);font-size:13px;">해당 조건의 인원이 없습니다.</td></tr>';
+    return;
+  }
   tb.innerHTML=rows.map(function(d){
     var bg=d.status==='eligible'?'background:#f0fdf4;':d.status==='re-eval'?'background:#eff6ff;':d.status==='review'?'background:#fffbeb;':'';
-    return '<tr style="'+bg+'">'
-      +'<td style="font-weight:700;color:var(--sky-dd);font-size:12px;">'+d.sabun+'</td>'
-      +'<td style="font-weight:800;font-size:13px;">'+d.name+'</td>'
-      +'<td style="font-size:11px;color:var(--gray-600);">'+d.dept+'</td>'
-      +'<td style="font-size:11px;color:var(--gray-600);">'+d.team+'</td>'
-      +'<td style="font-size:12px;">'+d.pos+'</td>'
-      +'<td style="font-size:11px;">'+(d.cur||'-')+'</td>'
-      +'<td style="font-size:11px;font-weight:700;color:var(--navy);">'+(d.target||'-')+'</td>'
-      +'<td>'+gradeChip(d.y23,d.y23)+'</td>'
-      +'<td>'+gradeChip(d.y24,d.y24)+'</td>'
-      +'<td>'+gradeChip(d.y25,d.y25)+'</td>'
-      +'<td>'+tagHTML(d.status)+'</td>'
-      +'<td style="font-size:11px;color:var(--gray-600);max-width:160px;white-space:normal;">'+(d.note||'')+'</td>'
-      +'</tr>';
+    return '<tr style="'+bg+'">'+hdrs.map(function(h){return _renderCell(h,d);}).join('')+'</tr>';
   }).join('');
 }
 
@@ -1948,10 +1944,10 @@ function _setSyncBadge(state,msg){
   }
 }
 
-/* 구글시트에서 데이터 가져오기 (Apps Script → JSON) */
+/* 구글시트에서 데이터 가져오기 (Apps Script → JSON, 동적 컬럼 지원) */
 function fetchSheetData(onDone){
   _setSyncBadge('loading');
-  var url=SHEET_DATA_URL+'?_t='+Date.now();
+  var url=SHEET_DATA_URL+'?action=getData&sheet=지원현황&_t='+Date.now();
   fetch(url)
     .then(function(res){
       if(!res.ok)throw new Error('HTTP '+res.status);
@@ -1960,8 +1956,13 @@ function fetchSheetData(onDone){
     .then(function(json){
       if(json.error)throw new Error(json.error);
       if(!json.data||!json.data.length)throw new Error('데이터 없음 (시트 헤더·내용 확인)');
+      /* 헤더 캡처: 시트 컬럼 순서대로 저장 */
+      if(json.headers&&json.headers.length) DATA_HEADERS=json.headers;
       var parsed=json.data.map(function(row,idx){
-        var obj={no:idx+1};
+        var obj={no:idx+1,_raw:{}};
+        /* 원본값 전체 저장 (동적 컬럼 렌더링용) */
+        Object.keys(row).forEach(function(h){ obj._raw[h]=String(row[h]).trim(); });
+        /* 표준 필드명으로 매핑 */
         Object.keys(row).forEach(function(h){
           var field=_COL_MAP[h.trim()];
           if(field)obj[field]=String(row[h]).trim();
@@ -1992,6 +1993,65 @@ function fetchSheetData(onDone){
     });
 }
 
+/* 직책자 리스트 가져오기 (Apps Script → '직책자' 시트) */
+function fetchMgrData(){
+  if(!SHEET_DATA_URL) return;
+  var url=SHEET_DATA_URL+'?action=getData&sheet=직책자&_t='+Date.now();
+  fetch(url)
+    .then(function(r){return r.json();})
+    .then(function(json){
+      if(json.error||!json.data||!json.data.length) return;
+      var scopeMap={'전체':'all','사업부':'dept','팀':'team','all':'all','dept':'dept','team':'team'};
+      var mgrs=[];
+      json.data.forEach(function(row){
+        var sabun=(row['사번']||'').trim();
+        var name=(row['성명']||'').trim();
+        if(!sabun||!name) return;
+        var scopeRaw=(row['조회범위']||row['범위']||'팀').trim();
+        var scope=scopeMap[scopeRaw]||'team';
+        var dept=(row['사업부']||'').trim();
+        var teamRaw=(row['팀']||'').trim();
+        var teams=teamRaw?teamRaw.split(/[,，、]/).map(function(t){return t.trim();}).filter(Boolean):[];
+        mgrs.push({
+          sabun:sabun, name:name, scope:scope,
+          depts:scope!=='all'?[dept]:null,
+          teams:scope==='team'?teams:null,
+          label:(row['표시명']||'').trim()
+        });
+      });
+      if(mgrs.length){ MANAGERS=mgrs; renderMgrList(); }
+    })
+    .catch(function(){}); /* 실패 시 기존 MANAGERS 유지 */
+}
+
+/* 접속 현황 구글시트에 기록 (fire & forget) */
+function postAccessLog(entry){
+  if(!SHEET_DATA_URL) return;
+  var url=SHEET_DATA_URL+'?action=logAccess';
+  fetch(url,{method:'POST',body:JSON.stringify(entry)}).catch(function(){});
+}
+
+/* 동적 셀 렌더링: 헤더명으로 올바른 HTML 반환 */
+function _renderCell(header,obj){
+  var h=header.trim();
+  if(h==='사번') return '<td style="font-weight:700;color:var(--sky-dd);font-size:12px;">'+(obj.sabun||'-')+'</td>';
+  if(h==='성명') return '<td style="font-weight:800;font-size:13px;">'+(obj.name||'-')+'</td>';
+  if(h==='사업부') return '<td style="font-size:11px;color:var(--gray-600);">'+(obj.dept||'-')+'</td>';
+  if(h==='팀') return '<td style="font-size:11px;color:var(--gray-600);">'+(obj.team||'-')+'</td>';
+  if(h==='직위') return '<td style="font-size:12px;">'+(obj.pos||'-')+'</td>';
+  if(h==='사원구분') return '<td style="font-size:11px;">'+(obj.emptype||'-')+'</td>';
+  if(h==='현재직무급'||h==='현재 직무급') return '<td style="font-size:11px;">'+(obj.cur||'-')+'</td>';
+  if(h==='도전가능직무'||h==='도전 가능 직무') return '<td style="font-size:11px;font-weight:700;color:var(--navy);">'+(obj.target||'-')+'</td>';
+  if(/^\d{4}$/.test(h)){var yv=obj._raw?obj._raw[header]:'-'; return '<td>'+gradeChip(yv,yv)+'</td>';}
+  if(h==='구분') return '<td>'+tagHTML(obj.status)+'</td>';
+  if(h==='도전직무'||h==='도전 직무') return '<td style="font-size:11px;">'+(obj.challenge||'-')+'</td>';
+  if(h==='제출'||h==='제출여부'||h==='제출 여부') return '<td style="font-size:11px;text-align:center;">'+(obj.submit||'-')+'</td>';
+  if(h==='비고') return '<td style="font-size:11px;max-width:160px;white-space:normal;color:var(--gray-600);">'+(obj.note||'')+'</td>';
+  /* 구글시트에서 새로 추가된 동적 컬럼 */
+  var extra=obj._raw?(obj._raw[header]||'-'):'-';
+  return '<td style="font-size:11px;color:var(--gray-700);">'+extra+'</td>';
+}
+
 /* 관리자 패널에서 URL 적용 */
 function applySheetUrl(){
   var urlEl=document.getElementById('admin-sheet-url');
@@ -2008,8 +2068,9 @@ function applySheetUrl(){
 /* 자동 동기화 시작 */
 function startAutoSync(){
   fetchSheetData();
+  fetchMgrData(); /* 직책자 리스트도 초기 로드 */
   if(_syncTimer)clearInterval(_syncTimer);
-  _syncTimer=setInterval(function(){fetchSheetData();},SYNC_INTERVAL_MS);
+  _syncTimer=setInterval(function(){ fetchSheetData(); fetchMgrData(); },SYNC_INTERVAL_MS);
 }
 
 /* 페이지 로드 시 자동 시작 */
