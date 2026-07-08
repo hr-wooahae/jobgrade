@@ -1,0 +1,2042 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2026 직무급 지원 현황 조회</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --sky:    #0ea5e9;
+  --sky-d:  #0284c7;
+  --sky-dd: #0369a1;
+  --navy:   #0c2d4e;
+  --navy-l: #164e7a;
+  --ice:    #e0f2fe;
+  --ice-d:  #bae6fd;
+  --white:  #ffffff;
+  --gray-50:#f8fafc;
+  --gray-100:#f1f5f9;
+  --gray-200:#e2e8f0;
+  --gray-400:#94a3b8;
+  --gray-600:#475569;
+  --gray-800:#1e293b;
+  --green:  #10b981;
+  --amber:  #f59e0b;
+  --red:    #ef4444;
+  --blue:   #3b82f6;
+  --purple: #8b5cf6;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Noto Sans KR',sans-serif;background:var(--gray-50);min-height:100vh;color:var(--gray-800);}
+
+/* ══ PAGE SYSTEM ══ */
+.page{display:none;}
+.page.active{display:block;}
+
+/* ══ TOPBAR ══ */
+.topbar{
+  background:linear-gradient(135deg,var(--navy) 0%,var(--navy-l) 50%,var(--sky-dd) 100%);
+  padding:0 28px;height:58px;
+  display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;z-index:100;
+  box-shadow:0 2px 20px rgba(12,45,78,0.4);
+}
+.topbar-left{display:flex;align-items:center;gap:12px;}
+.topbar-logo{
+  width:34px;height:34px;background:linear-gradient(135deg,var(--sky),#38bdf8);
+  border-radius:10px;display:flex;align-items:center;justify-content:center;
+  font-size:16px;font-weight:800;color:#fff;letter-spacing:-1px;
+  box-shadow:0 2px 8px rgba(14,165,233,0.5);
+}
+.topbar-title{color:#fff;font-size:15px;font-weight:700;letter-spacing:-0.3px;}
+.topbar-sub{color:rgba(255,255,255,0.45);font-size:11px;margin-top:1px;}
+.topbar-badge{
+  background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2);
+  color:rgba(255,255,255,0.75);font-size:10px;font-weight:600;
+  padding:3px 10px;border-radius:12px;letter-spacing:0.3px;
+}
+
+/* ══ HOME PAGE ══ */
+.home-bg{
+  min-height:calc(100vh - 58px);
+  background:linear-gradient(160deg,#e0f2fe 0%,#f0f9ff 35%,#f8fafc 70%,#eff6ff 100%);
+  position:relative;overflow:hidden;
+}
+.home-bg::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse 80% 60% at 70% 20%,rgba(14,165,233,0.12) 0%,transparent 60%),
+             radial-gradient(ellipse 50% 40% at 10% 80%,rgba(59,130,246,0.08) 0%,transparent 50%);
+  pointer-events:none;
+}
+.home-wrap{max-width:1100px;margin:0 auto;padding:60px 24px 80px;}
+.home-hero{text-align:center;margin-bottom:56px;}
+.home-hero .year-badge{
+  display:inline-flex;align-items:center;gap:6px;
+  background:linear-gradient(135deg,var(--sky),var(--blue));
+  color:#fff;font-size:11px;font-weight:700;
+  padding:5px 14px;border-radius:20px;margin-bottom:20px;
+  letter-spacing:0.8px;box-shadow:0 4px 14px rgba(14,165,233,0.35);
+}
+.home-hero h1{
+  font-size:clamp(26px,4vw,38px);font-weight:800;
+  color:var(--navy);line-height:1.25;margin-bottom:12px;letter-spacing:-1px;
+}
+.home-hero h1 span{
+  background:linear-gradient(135deg,var(--sky-d),var(--blue));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.home-hero p{font-size:14px;color:var(--gray-600);line-height:1.7;}
+
+/* 로그인 카드 그리드 */
+.login-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;max-width:820px;margin:0 auto;}
+.login-card{
+  background:#fff;border-radius:20px;padding:32px 24px;
+  border:1.5px solid var(--gray-200);
+  box-shadow:0 4px 24px rgba(12,45,78,0.06);
+  cursor:pointer;transition:all 0.22s ease;
+  display:flex;flex-direction:column;align-items:center;text-align:center;
+  position:relative;overflow:hidden;
+}
+.login-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:4px;
+  transition:height 0.22s;
+}
+.login-card.card-admin::before{background:linear-gradient(90deg,var(--sky),var(--blue));}
+.login-card.card-manager::before{background:linear-gradient(90deg,#06b6d4,var(--sky));}
+.login-card.card-member::before{background:linear-gradient(90deg,var(--blue),var(--purple));}
+.login-card:hover{transform:translateY(-4px);box-shadow:0 12px 40px rgba(12,45,78,0.13);border-color:var(--sky);}
+.login-card:hover::before{height:5px;}
+.card-icon{
+  width:64px;height:64px;border-radius:18px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:28px;margin-bottom:18px;
+}
+.card-admin .card-icon{background:linear-gradient(135deg,#e0f2fe,#bae6fd);}
+.card-manager .card-icon{background:linear-gradient(135deg,#cffafe,#a5f3fc);}
+.card-member .card-icon{background:linear-gradient(135deg,#dbeafe,#bfdbfe);}
+.card-title{font-size:17px;font-weight:700;color:var(--navy);margin-bottom:6px;}
+.card-desc{font-size:12px;color:var(--gray-400);line-height:1.6;margin-bottom:20px;}
+.card-btn{
+  width:100%;height:40px;border:none;border-radius:10px;
+  font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;
+  transition:all 0.18s;color:#fff;
+}
+.card-admin .card-btn{background:linear-gradient(135deg,var(--sky-d),var(--blue));}
+.card-manager .card-btn{background:linear-gradient(135deg,#06b6d4,var(--sky));}
+.card-member .card-btn{background:linear-gradient(135deg,var(--blue),var(--purple));}
+.card-btn:hover{opacity:0.88;transform:scale(0.98);}
+.card-role-tag{
+  position:absolute;top:18px;right:16px;
+  font-size:9px;font-weight:700;letter-spacing:0.5px;
+  padding:3px 8px;border-radius:6px;
+}
+.card-admin .card-role-tag{background:#e0f2fe;color:var(--sky-dd);}
+.card-manager .card-role-tag{background:#cffafe;color:#0891b2;}
+.card-member .card-role-tag{background:#dbeafe;color:#1d4ed8;}
+
+/* 안내 섹션 */
+.info-section{max-width:820px;margin:40px auto 0;display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.info-box{
+  background:#fff;border-radius:14px;padding:18px 20px;
+  border:1px solid var(--gray-200);
+}
+.info-box h4{font-size:13px;font-weight:700;color:var(--navy);margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+.info-box ul{list-style:none;}
+.info-box ul li{font-size:12px;color:var(--gray-600);padding:4px 0;padding-left:14px;position:relative;line-height:1.5;}
+.info-box ul li::before{content:'›';position:absolute;left:0;color:var(--sky);font-weight:700;}
+
+/* ══ LOGIN PAGE (공통) ══ */
+.login-page-bg{
+  min-height:calc(100vh - 58px);
+  background:linear-gradient(160deg,#e0f2fe 0%,#f0f9ff 40%,#f8fafc 100%);
+  display:flex;align-items:center;justify-content:center;padding:40px 20px;
+}
+.login-box{
+  background:#fff;border-radius:22px;padding:40px 36px;
+  width:420px;max-width:100%;
+  box-shadow:0 8px 48px rgba(12,45,78,0.12);
+  border:1.5px solid rgba(14,165,233,0.2);
+}
+.login-box-icon{
+  width:60px;height:60px;border-radius:18px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:26px;margin:0 auto 16px;
+}
+.login-box h2{font-size:20px;font-weight:800;color:var(--navy);text-align:center;margin-bottom:6px;}
+.login-box p{font-size:12px;color:var(--gray-400);text-align:center;margin-bottom:28px;}
+.lf-row{margin-bottom:16px;}
+.lf-row label{font-size:11px;font-weight:700;color:var(--gray-600);display:block;margin-bottom:6px;letter-spacing:0.2px;}
+.lf-row input{
+  width:100%;height:46px;
+  border:1.5px solid var(--gray-200);border-radius:12px;
+  padding:0 16px;font-size:14px;font-family:inherit;
+  color:var(--gray-800);outline:none;transition:border 0.18s,box-shadow 0.18s;
+  background:var(--gray-50);
+}
+.lf-row input:focus{border-color:var(--sky);box-shadow:0 0 0 3px rgba(14,165,233,0.12);background:#fff;}
+.lf-err{color:#ef4444;font-size:12px;margin-top:6px;display:none;font-weight:500;}
+.lf-submit{
+  width:100%;height:48px;border:none;border-radius:12px;
+  font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;
+  color:#fff;margin-top:6px;transition:all 0.18s;
+}
+.lf-back{
+  background:none;border:none;font-size:12px;color:var(--gray-400);
+  cursor:pointer;font-family:inherit;margin-top:16px;width:100%;text-align:center;display:block;
+}
+.lf-back:hover{color:var(--sky);}
+
+/* ══ MEMBER PAGE (팀원 조회) ══ */
+.member-wrap{max-width:560px;margin:0 auto;padding:44px 20px 80px;}
+.lookup-hero{text-align:center;margin-bottom:32px;}
+.lookup-hero .badge{
+  display:inline-block;background:var(--ice);color:var(--sky-dd);
+  font-size:11px;font-weight:700;padding:4px 14px;border-radius:20px;
+  margin-bottom:14px;letter-spacing:0.4px;
+}
+.lookup-hero h2{font-size:22px;font-weight:800;color:var(--navy);margin-bottom:8px;letter-spacing:-0.5px;}
+.lookup-hero p{font-size:13px;color:var(--gray-600);line-height:1.7;}
+.search-card{
+  background:#fff;border-radius:16px;border:1.5px solid var(--gray-200);
+  padding:26px 22px;box-shadow:0 4px 20px rgba(12,45,78,0.06);margin-bottom:20px;
+}
+.search-card label{font-size:12px;font-weight:700;color:var(--gray-600);display:block;margin-bottom:8px;}
+.search-card input{
+  width:100%;height:50px;border:1.5px solid var(--gray-200);border-radius:12px;
+  padding:0 16px;font-size:16px;font-family:inherit;color:var(--gray-800);
+  outline:none;transition:border 0.18s,box-shadow 0.18s;background:var(--gray-50);
+}
+.search-card input:focus{border-color:var(--sky);box-shadow:0 0 0 3px rgba(14,165,233,0.12);background:#fff;}
+.search-btn{
+  width:100%;height:50px;background:linear-gradient(135deg,var(--sky-d),var(--blue));
+  color:#fff;border:none;border-radius:12px;
+  font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;margin-top:14px;
+  transition:all 0.18s;box-shadow:0 4px 14px rgba(14,165,233,0.3);
+}
+.search-btn:hover{opacity:0.88;}
+
+/* 결과 카드 */
+.result-card{
+  background:#fff;border-radius:16px;border:1.5px solid var(--gray-200);
+  padding:22px;box-shadow:0 4px 20px rgba(12,45,78,0.06);margin-top:18px;
+}
+.person-hdr{display:flex;align-items:center;gap:14px;margin-bottom:18px;padding-bottom:16px;border-bottom:1px solid var(--gray-100);}
+.avatar{width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:800;color:#fff;flex-shrink:0;}
+.person-name{font-size:16px;font-weight:800;color:var(--navy);}
+.person-meta{font-size:12px;color:var(--gray-400);margin-top:2px;}
+.status-bar{border-radius:12px;padding:14px 16px;margin-bottom:16px;display:flex;gap:12px;align-items:flex-start;}
+.status-bar.s-eligible{background:#ecfdf5;border:1.5px solid #6ee7b7;}
+.status-bar.s-review{background:#fffbeb;border:1.5px solid #fcd34d;}
+.status-bar.s-ineligible{background:#fef2f2;border:1.5px solid #fca5a5;}
+.status-bar.s-re-eval{background:#eff6ff;border:1.5px solid #93c5fd;}
+.status-icon{font-size:22px;flex-shrink:0;margin-top:1px;}
+.status-title{font-size:14px;font-weight:800;margin-bottom:3px;}
+.s-eligible .status-title{color:#059669;}
+.s-review .status-title{color:#d97706;}
+.s-ineligible .status-title{color:#dc2626;}
+.s-re-eval .status-title{color:#2563eb;}
+.status-reason{font-size:12px;line-height:1.6;}
+.s-eligible .status-reason{color:#047857;}
+.s-review .status-reason{color:#b45309;}
+.s-ineligible .status-reason{color:#991b1b;}
+.s-re-eval .status-reason{color:#1d4ed8;}
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;}
+.detail-item{background:var(--gray-50);border-radius:10px;padding:10px 12px;}
+.detail-item .dl{font-size:10px;color:var(--gray-400);font-weight:700;letter-spacing:0.3px;margin-bottom:3px;}
+.detail-item .dv{font-size:13px;color:var(--navy);font-weight:700;}
+.eval-row{display:flex;gap:8px;margin-bottom:14px;}
+.eval-chip{flex:1;text-align:center;padding:8px 4px;border-radius:10px;}
+.eval-chip .ey{font-size:10px;color:var(--gray-400);}
+.eval-chip .eg{font-size:15px;font-weight:800;margin-top:2px;}
+.gA{background:#ecfdf5;} .gA .eg{color:#059669;}
+.gB{background:#eff6ff;} .gB .eg{color:#2563eb;}
+.gC{background:#fef2f2;} .gC .eg{color:#dc2626;}
+.gN{background:var(--gray-100);} .gN .eg{color:var(--gray-400);}
+.target-box{background:linear-gradient(135deg,#eff6ff,#dbeafe);border-radius:10px;padding:12px 14px;border:1px solid #bfdbfe;margin-bottom:12px;}
+.target-box .tl{font-size:10px;color:#1d4ed8;font-weight:700;margin-bottom:5px;}
+.target-box .tv{font-size:14px;font-weight:800;color:var(--navy);}
+.innov-box{background:linear-gradient(135deg,#fffbeb,#fef9c3);border:1.5px solid #fde68a;border-radius:12px;padding:14px 16px;margin-top:12px;}
+.innov-box .ih{font-size:13px;font-weight:800;color:#92400e;margin-bottom:8px;display:flex;align-items:center;gap:6px;}
+.innov-box .ib{font-size:12px;color:#78350f;line-height:1.75;}
+.innov-box .ib strong{color:#b45309;}
+.contact-box{background:#fef2f2;border:1px solid #fca5a5;border-radius:12px;padding:14px;text-align:center;margin-top:12px;}
+.contact-box .ct{font-size:13px;font-weight:800;color:#991b1b;margin-bottom:4px;}
+.contact-box .cs{font-size:12px;color:var(--gray-600);}
+.back-home-btn{
+  background:none;border:1.5px solid var(--gray-200);color:var(--gray-600);
+  padding:8px 18px;border-radius:10px;font-size:12px;font-weight:600;
+  cursor:pointer;font-family:inherit;transition:all 0.15s;
+}
+.back-home-btn:hover{border-color:var(--sky);color:var(--sky);}
+
+/* ══ ADMIN PAGE ══ */
+.admin-page{min-height:calc(100vh - 58px);background:var(--gray-50);}
+.admin-wrap{padding:24px 20px;max-width:100%;}
+.admin-toprow{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:20px;gap:12px;flex-wrap:wrap;
+}
+.admin-toprow h2{font-size:17px;font-weight:800;color:var(--navy);display:flex;align-items:center;gap:8px;}
+.admin-actions{display:flex;gap:8px;flex-wrap:wrap;}
+.btn-back{background:#fff;border:1.5px solid var(--gray-200);color:var(--gray-600);padding:8px 16px;border-radius:10px;font-size:13px;cursor:pointer;font-family:inherit;font-weight:600;}
+.btn-back:hover{border-color:var(--sky);color:var(--sky);}
+.btn-add{background:linear-gradient(135deg,#10b981,#059669);color:#fff;border:none;padding:8px 16px;border-radius:10px;font-size:13px;cursor:pointer;font-family:inherit;font-weight:700;}
+.btn-csv{background:linear-gradient(135deg,var(--sky-d),var(--blue));color:#fff;border:none;padding:8px 16px;border-radius:10px;font-size:13px;cursor:pointer;font-family:inherit;font-weight:700;}
+.btn-template{background:linear-gradient(135deg,#7c3aed,#6d28d9);color:#fff;border:none;padding:8px 16px;border-radius:10px;font-size:13px;cursor:pointer;font-family:inherit;font-weight:700;}
+.btn-template:hover{opacity:0.88;}
+
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;}
+.stat-card{
+  background:#fff;border-radius:14px;border:1.5px solid var(--gray-200);
+  padding:14px 18px;box-shadow:0 2px 10px rgba(12,45,78,0.04);
+}
+.stat-card .sn{font-size:28px;font-weight:800;color:var(--navy);}
+.stat-card .sl{font-size:11px;color:var(--gray-400);margin-top:2px;font-weight:500;}
+
+.filter-row{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center;}
+.filter-row input[type=text],.filter-row select{
+  height:38px;border:1.5px solid var(--gray-200);border-radius:10px;
+  padding:0 12px;font-size:13px;font-family:inherit;background:#fff;color:var(--gray-800);outline:none;
+  transition:border 0.15s;
+}
+.filter-row input[type=text]{width:210px;}
+.filter-row input[type=text]:focus,.filter-row select:focus{border-color:var(--sky);}
+.filter-count{font-size:12px;color:var(--gray-400);font-weight:500;}
+
+.tbl-wrap{background:#fff;border-radius:14px;border:1.5px solid var(--gray-200);overflow-x:auto;box-shadow:0 2px 10px rgba(12,45,78,0.04);}
+table{width:100%;border-collapse:collapse;font-size:12px;min-width:960px;}
+thead tr{background:linear-gradient(135deg,var(--navy),var(--navy-l));}
+thead th{color:rgba(255,255,255,0.9);padding:11px 10px;text-align:left;font-weight:700;font-size:11px;white-space:nowrap;}
+tbody tr{border-bottom:1px solid var(--gray-100);transition:background 0.1s;}
+tbody tr:hover{background:var(--ice);}
+tbody td{padding:9px 10px;white-space:nowrap;}
+.tag{display:inline-block;padding:3px 9px;border-radius:6px;font-size:10px;font-weight:800;}
+.tag-eligible{background:#dcfce7;color:#166534;}
+.tag-ineligible{background:#fee2e2;color:#991b1b;}
+.tag-re-eval{background:#dbeafe;color:#1e40af;}
+.tag-review{background:#fef9c3;color:#854d0e;}
+.grade-chip{display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:800;}
+.gA2{background:#dcfce7;color:#166534;}
+.gB2{background:#dbeafe;color:#1e40af;}
+.gC2{background:#fee2e2;color:#991b1b;}
+.gN2{background:var(--gray-100);color:var(--gray-400);}
+.edit-btn{
+  background:linear-gradient(135deg,var(--sky-d),var(--blue));color:#fff;border:none;
+  border-radius:7px;padding:4px 12px;font-size:11px;cursor:pointer;font-weight:700;
+  white-space:nowrap;font-family:inherit;
+}
+
+/* ══ MANAGER PAGE ══ */
+.manager-page{min-height:calc(100vh - 58px);background:var(--gray-50);}
+.mgr-wrap{padding:24px 20px;max-width:100%;}
+.mgr-header{
+  background:#fff;border-radius:16px;border:1.5px solid var(--gray-200);
+  padding:18px 22px;margin-bottom:18px;
+  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;
+  box-shadow:0 2px 10px rgba(12,45,78,0.04);
+}
+.mgr-info{display:flex;align-items:center;gap:14px;}
+.mgr-avatar{
+  width:46px;height:46px;border-radius:14px;
+  background:linear-gradient(135deg,var(--sky),var(--blue));
+  color:#fff;display:flex;align-items:center;justify-content:center;
+  font-size:17px;font-weight:800;flex-shrink:0;
+}
+.mgr-name{font-size:16px;font-weight:800;color:var(--navy);}
+.mgr-scope{font-size:12px;color:var(--gray-400);margin-top:2px;}
+.mgr-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;}
+.mgr-stat{background:#fff;border-radius:12px;border:1.5px solid var(--gray-200);padding:12px 16px;box-shadow:0 2px 8px rgba(12,45,78,0.04);}
+.mgr-stat .sn{font-size:24px;font-weight:800;color:var(--navy);}
+.mgr-stat .sl{font-size:11px;color:var(--gray-400);font-weight:500;margin-top:1px;}
+
+/* 팀 필터 칩 */
+.team-filter{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
+.team-chip{
+  padding:6px 14px;border-radius:20px;border:1.5px solid var(--gray-200);
+  background:#fff;color:var(--gray-600);font-size:12px;font-weight:700;
+  cursor:pointer;font-family:inherit;transition:all 0.15s;
+}
+.team-chip.active{border-color:var(--sky);background:linear-gradient(135deg,var(--sky-d),var(--blue));color:#fff;}
+.team-chip:hover:not(.active){border-color:var(--sky);color:var(--sky-d);}
+
+/* 상태 탭 */
+.tab-row{display:flex;background:#fff;border-radius:12px;border:1.5px solid var(--gray-200);overflow:hidden;margin-bottom:16px;}
+.tab-btn{flex:1;padding:11px 8px;font-size:12px;font-weight:700;border:none;background:#fff;color:var(--gray-400);cursor:pointer;font-family:inherit;border-right:1px solid var(--gray-100);transition:all 0.15s;}
+.tab-btn:last-child{border-right:none;}
+.tab-btn.active{background:linear-gradient(135deg,var(--sky-d),var(--blue));color:#fff;}
+.tab-btn:hover:not(.active){background:var(--ice);color:var(--sky-dd);}
+.tab-count{display:inline-block;background:rgba(255,255,255,0.2);border-radius:8px;padding:1px 6px;font-size:10px;margin-left:4px;}
+.tab-btn:not(.active) .tab-count{background:var(--gray-100);color:var(--gray-600);}
+
+/* ══ MCIRCLE LINK BTN ══ */
+.mcircle-btn{
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  width:100%;height:44px;margin-top:10px;
+  background:linear-gradient(135deg,#0c2d4e,#164e7a);
+  color:#fff;border:none;border-radius:12px;
+  font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;
+  transition:all 0.18s;text-decoration:none;
+  box-shadow:0 4px 14px rgba(12,45,78,0.25);
+}
+.mcircle-btn:hover{opacity:0.88;transform:scale(0.98);}
+.mcircle-badge{
+  background:rgba(255,255,255,0.15);border-radius:6px;
+  padding:2px 7px;font-size:10px;letter-spacing:0.5px;
+}
+/* 비밀번호 변경 관련 */
+.pw-change-section{
+  margin-top:14px;padding-top:14px;
+  border-top:1.5px dashed var(--gray-200);
+}
+.pw-toggle-btn{
+  background:none;border:none;color:var(--sky-d);font-size:12px;
+  font-weight:700;cursor:pointer;font-family:inherit;width:100%;text-align:center;
+  padding:4px 0;
+}
+.pw-toggle-btn:hover{color:var(--sky);}
+.pw-change-box{
+  margin-top:12px;background:var(--gray-50);border-radius:12px;
+  border:1.5px solid var(--gray-200);padding:16px;
+  animation:fadeIn 0.2s ease;
+}
+.pw-notice{
+  font-size:11px;color:var(--gray-400);text-align:center;
+  margin-top:10px;line-height:1.5;
+}
+.pw-notice strong{color:var(--sky-dd);}
+@keyframes fadeIn{from{opacity:0;transform:translateY(-6px);}to{opacity:1;transform:translateY(0);}}
+
+/* ══ MODALS ══ */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(12,45,78,0.45);z-index:300;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(3px);}
+.modal-bg.open{display:flex;}
+.modal{background:#fff;border-radius:20px;padding:30px;width:620px;max-width:100%;max-height:92vh;overflow-y:auto;box-shadow:0 20px 60px rgba(12,45,78,0.2);}
+.modal h3{font-size:16px;font-weight:800;color:var(--navy);margin-bottom:20px;padding-bottom:14px;border-bottom:1.5px solid var(--gray-100);display:flex;align-items:center;gap:8px;}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.form-row{margin-bottom:0;}
+.form-row.full{grid-column:1/-1;}
+.form-row label{font-size:11px;font-weight:700;color:var(--gray-600);display:block;margin-bottom:5px;letter-spacing:0.2px;}
+.form-row input,.form-row select,.form-row textarea{
+  width:100%;border:1.5px solid var(--gray-200);border-radius:10px;
+  padding:9px 12px;font-size:13px;font-family:inherit;outline:none;
+  transition:border 0.15s,box-shadow 0.15s;background:var(--gray-50);color:var(--gray-800);
+}
+.form-row input:focus,.form-row select:focus,.form-row textarea:focus{border-color:var(--sky);box-shadow:0 0 0 3px rgba(14,165,233,0.1);background:#fff;}
+.modal-btns{display:flex;gap:10px;margin-top:22px;justify-content:flex-end;}
+.mbtn-save{background:linear-gradient(135deg,var(--sky-d),var(--blue));color:#fff;border:none;border-radius:10px;padding:10px 24px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;}
+.mbtn-cancel{background:var(--gray-100);color:var(--gray-600);border:none;border-radius:10px;padding:10px 18px;font-size:13px;cursor:pointer;font-family:inherit;font-weight:600;}
+.mbtn-del{background:#fee2e2;color:#991b1b;border:1.5px solid #fca5a5;border-radius:10px;padding:10px 18px;font-size:13px;cursor:pointer;font-family:inherit;font-weight:600;margin-right:auto;}
+
+@media(max-width:640px){
+  .login-grid{grid-template-columns:1fr;max-width:340px;}
+  .info-section{grid-template-columns:1fr;}
+  .stats-row,.mgr-stats{grid-template-columns:1fr 1fr;}
+  .detail-grid{grid-template-columns:1fr;}
+  .form-grid{grid-template-columns:1fr;}
+  .tab-btn{font-size:11px;padding:9px 4px;}
+}
+</style>
+</head>
+<body>
+
+<!-- ══ TOPBAR ══ -->
+<div class="topbar">
+  <div class="topbar-left">
+    <!-- 이지메디컴 로고 -->
+    <div style="background:#fff;border-radius:10px;padding:4px 10px;display:flex;align-items:center;margin-right:14px;">
+      <img src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD/4RDaRXhpZgAATU0AKgAAAAgABAE7AAIAAAAFAAAISodpAAQAAAABAAAIUJydAAEAAAAKAAAQyOocAAcAAAgMAAAAPgAAAAAc6gAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHVzZXIAAAAFkAMAAgAAABQAABCekAQAAgAAABQAABCykpEAAgAAAAMwMQAAkpIAAgAAAAMwMQAA6hwABwAACAwAAAiSAAAAABzqAAAACAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMjAxNDowNzoxMSAxMTozMTo1NgAyMDE0OjA3OjExIDExOjMxOjU2AAAAdQBzAGUAcgAAAP/hCxdodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvADw/eHBhY2tldCBiZWdpbj0n77u/JyBpZD0nVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkJz8+DQo8eDp4bXBtZXRhIHhtbG5zOng9ImFkb2JlOm5zOm1ldGEvIj48cmRmOlJERiB4bWxuczpyZGY9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkvMDIvMjItcmRmLXN5bnRheC1ucyMiPjxyZGY6RGVzY3JpcHRpb24gcmRmOmFib3V0PSJ1dWlkOmZhZjViZGQ1LWJhM2QtMTFkYS1hZDMxLWQzM2Q3NTE4MmYxYiIgeG1sbnM6ZGM9Imh0dHA6Ly9wdXJsLm9yZy9kYy9lbGVtZW50cy8xLjEvIi8+PHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9InV1aWQ6ZmFmNWJkZDUtYmEzZC0xMWRhLWFkMzEtZDMzZDc1MTgyZjFiIiB4bWxuczp4bXA9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC8iPjx4bXA6Q3JlYXRlRGF0ZT4yMDE0LTA3LTExVDExOjMxOjU2LjAwNjwveG1wOkNyZWF0ZURhdGU+PC9yZGY6RGVzY3JpcHRpb24+PHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9InV1aWQ6ZmFmNWJkZDUtYmEzZC0xMWRhLWFkMzEtZDMzZDc1MTgyZjFiIiB4bWxuczpkYz0iaHR0cDovL3B1cmwub3JnL2RjL2VsZW1lbnRzLzEuMS8iPjxkYzpjcmVhdG9yPjxyZGY6U2VxIHhtbG5zOnJkZj0iaHR0cDovL3d3dy53My5vcmcvMTk5OS8wMi8yMi1yZGYtc3ludGF4LW5zIyI+PHJkZjpsaT51c2VyPC9yZGY6bGk+PC9yZGY6U2VxPg0KCQkJPC9kYzpjcmVhdG9yPjwvcmRmOkRlc2NyaXB0aW9uPjwvcmRmOlJERj48L3g6eG1wbWV0YT4NCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgPD94cGFja2V0IGVuZD0ndyc/Pv/bAEMABwUFBgUEBwYFBggHBwgKEQsK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" alt="이지메디컴" style="height:28px;display:block;">
+    </div>
+    <div>
+      <div class="topbar-title">2026 직무급 지원 현황 조회</div>
+      <div class="topbar-sub">이지메디컴 직무급 지원 현황</div>
+    </div>
+  </div>
+  <div style="display:flex;gap:8px;align-items:center;">
+    <div class="topbar-badge">기준일 2026.04.01</div>
+    <div id="sync-badge" class="topbar-badge" style="cursor:pointer;" onclick="fetchSheetData()" title="클릭하여 지금 동기화">🔄 연결 중...</div>
+  </div>
+</div>
+
+<!-- ══════════════════════ HOME PAGE ══════════════════════ -->
+<div id="page-home" class="page active">
+<div class="home-bg">
+<div class="home-wrap">
+  <div class="home-hero">
+    <div class="year-badge">⭐ 2026년 4월 직무급 지원 현황</div>
+    <h1>직무급 지원 현황 <span>통합 조회 시스템</span></h1>
+    <p>권한에 맞는 로그인을 선택하여 직무급 지원 현황을 확인하세요</p>
+  </div>
+
+  <!-- 팀원 + 직책자 2칸 카드 -->
+  <div class="login-grid" style="grid-template-columns:1fr 1fr;max-width:620px;">
+    <!-- 팀원 -->
+    <div class="login-card card-member" onclick="gotoPage('page-member')">
+      <span class="card-role-tag">MEMBER</span>
+      <div class="card-icon">👤</div>
+      <div class="card-title">팀원 조회</div>
+      <div class="card-desc">사번을 입력하여 본인의 직무급 지원 현황과 지원 가능 직무를 확인합니다</div>
+      <button class="card-btn">사번으로 조회하기</button>
+    </div>
+    <!-- 직책자 -->
+    <div class="login-card card-manager" onclick="gotoPage('page-managerlogin')">
+      <span class="card-role-tag">MANAGER</span>
+      <div class="card-icon">👔</div>
+      <div class="card-title">직책자 로그인</div>
+      <div class="card-desc">소속 사업부·팀의 직무급 지원 현황을 탭 방식으로 한눈에 확인합니다</div>
+      <button class="card-btn">직책자로 로그인</button>
+    </div>
+  </div>
+
+  <!-- 관리자 버튼: 작게 하단 -->
+  <div style="text-align:center;margin-top:22px;">
+    <button onclick="gotoPage('page-adminlogin')" style="
+      background:none;border:1.5px solid var(--gray-200);
+      color:var(--gray-400);padding:6px 18px;border-radius:20px;
+      font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;
+      transition:all 0.15s;
+    " onmouseover="this.style.borderColor='var(--sky)';this.style.color='var(--sky-dd)';"
+       onmouseout="this.style.borderColor='var(--gray-200)';this.style.color='var(--gray-400)';">
+      🔐 관리자 로그인
+    </button>
+  </div>
+
+</div>
+</div>
+</div>
+
+<!-- ══════════════════════ MEMBER PAGE (팀원) ══════════════════════ -->
+<div id="page-member" class="page">
+<div style="background:linear-gradient(160deg,#e0f2fe 0%,#f0f9ff 40%,#f8fafc 100%);min-height:calc(100vh - 58px);">
+<div class="member-wrap">
+  <div style="margin-bottom:16px;">
+    <button class="back-home-btn" onclick="gotoPage('page-home')">← 처음으로</button>
+  </div>
+  <div class="lookup-hero">
+    <div class="badge">기준일 : 2026.04.01</div>
+    <h2>직무급 지원 현황 조회</h2>
+    <p>사번을 입력하시면 2026년 직무급 지원 가능 여부와<br>지원 가능 직무를 안내해 드립니다.</p>
+  </div>
+  <div class="search-card">
+    <label>사번 입력</label>
+    <input type="text" id="sabun-input" placeholder="예) 01463" maxlength="12"
+           onkeydown="if(event.key==='Enter') doSearch()">
+    <button class="search-btn" onclick="doSearch()">조회하기</button>
+  </div>
+  <div id="result-area"></div>
+</div>
+</div>
+</div>
+
+<!-- ══════════════════════ ADMIN LOGIN ══════════════════════ -->
+<div id="page-adminlogin" class="page">
+<div class="login-page-bg">
+<div class="login-box">
+  <div class="login-box-icon" style="background:linear-gradient(135deg,#e0f2fe,#bae6fd);">🔐</div>
+  <h2>관리자 로그인</h2>
+  <p>HR 담당자 전용 — 전체 인원 관리 기능</p>
+  <div class="lf-row">
+    <label>사번</label>
+    <input type="text" id="admin-sabun" placeholder="사번 입력" maxlength="12"
+           onkeydown="if(event.key==='Enter')document.getElementById('admin-pw').focus()">
+  </div>
+  <div class="lf-row">
+    <label>비밀번호</label>
+    <input type="password" id="admin-pw" placeholder="비밀번호 입력"
+           onkeydown="if(event.key==='Enter')checkAdminLogin()">
+  </div>
+  <p id="admin-err" class="lf-err">⚠ 사번 또는 비밀번호가 올바르지 않습니다.</p>
+  <button class="lf-submit" style="background:linear-gradient(135deg,var(--sky-d),var(--blue));box-shadow:0 4px 14px rgba(14,165,233,0.3);" onclick="checkAdminLogin()">로그인</button>
+  <button class="lf-back" onclick="gotoPage('page-home')">← 처음으로 돌아가기</button>
+</div>
+</div>
+</div>
+
+<!-- ══════════════════════ MANAGER LOGIN ══════════════════════ -->
+<div id="page-managerlogin" class="page">
+<div class="login-page-bg">
+<div class="login-box" style="width:440px;">
+  <div class="login-box-icon" style="background:linear-gradient(135deg,#cffafe,#a5f3fc);">👔</div>
+  <h2>직책자 로그인</h2>
+  <p>직책자 전용 — 소속 팀·사업부 현황 조회<br>
+    <span style="font-size:11px;color:var(--sky-dd);font-weight:700;">초기 비밀번호는 본인 사번과 동일합니다</span>
+  </p>
+
+  <div class="lf-row" style="margin-top:20px;">
+    <label>사번</label>
+    <input type="text" id="mgr-sabun" placeholder="사번 입력" maxlength="12"
+           onkeydown="if(event.key==='Enter')document.getElementById('mgr-pw').focus()">
+  </div>
+  <div class="lf-row">
+    <label>비밀번호</label>
+    <input type="password" id="mgr-pw" placeholder="초기: 사번과 동일"
+           onkeydown="if(event.key==='Enter')checkManagerLogin()">
+  </div>
+  <p id="mgr-err" class="lf-err">⚠ 사번 또는 비밀번호가 올바르지 않습니다.</p>
+  <button class="lf-submit" style="background:linear-gradient(135deg,#06b6d4,var(--sky));box-shadow:0 4px 14px rgba(6,182,212,0.3);margin-top:8px;" onclick="checkManagerLogin()">로그인</button>
+
+  <!-- 이지메디컴 연결 버튼 -->
+  <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--gray-100);text-align:center;">
+    <div style="font-size:11px;color:var(--gray-400);margin-bottom:8px;">이지메디컴 통합 HR 시스템으로 이동</div>
+    <a href="#" onclick="(function(){window.open('https://auth.daewoong.co.kr/keycloak/realms/backoffice-sso/login-actions/authenticate?client_id=http%3A%2F%2Fwww.workday.com&tab_id=4OCL4Lrs6B4&client_data=eyJydSI6Imh0dHBzOi8vd2QxMDIubXl3b3JrZGF5LmNvbS9kYWV3b29uZy9sb2dpbi1zYW1sLmh0bWxkIiwicm0iOiJwb3N0In0','_blank');return false;})()" class="mcircle-btn">
+      <span style="font-size:16px;">🔗</span>
+      이지메디컴 워크데이 로그인
+    </a>
+  </div>
+
+  <!-- 비밀번호 변경 토글 -->
+  <div class="pw-change-section">
+    <button class="pw-toggle-btn" onclick="togglePwChange()">🔑 비밀번호 변경</button>
+    <div id="pw-change-box" class="pw-change-box" style="display:none;">
+      <div class="lf-row">
+        <label>사번 확인</label>
+        <input type="text" id="pc-sabun" placeholder="사번 입력" maxlength="12">
+      </div>
+      <div class="lf-row" style="margin-top:10px;">
+        <label>현재 비밀번호</label>
+        <input type="password" id="pc-cur" placeholder="현재 비밀번호">
+      </div>
+      <div class="lf-row" style="margin-top:10px;">
+        <label>새 비밀번호</label>
+        <input type="password" id="pc-new" placeholder="새 비밀번호 (4자 이상)">
+      </div>
+      <div class="lf-row" style="margin-top:10px;">
+        <label>새 비밀번호 확인</label>
+        <input type="password" id="pc-confirm" placeholder="새 비밀번호 재입력">
+      </div>
+      <p id="pc-err" class="lf-err"></p>
+      <p id="pc-ok" style="color:var(--green);font-size:12px;margin-top:6px;display:none;font-weight:700;">✅ 비밀번호가 변경되었습니다.</p>
+      <button class="lf-submit" style="background:linear-gradient(135deg,var(--sky-d),var(--blue));margin-top:12px;height:42px;font-size:13px;" onclick="changeMgrPw()">변경하기</button>
+      <div class="pw-notice">비밀번호는 이 기기(브라우저)에만 저장됩니다.<br>파일을 새로 열면 <strong>초기화(사번 = 비밀번호)</strong>됩니다.</div>
+    </div>
+  </div>
+
+  <button class="lf-back" onclick="gotoPage('page-home')">← 처음으로 돌아가기</button>
+</div>
+</div>
+</div>
+
+<!-- ══════════════════════ ADMIN PAGE ══════════════════════ -->
+<div id="page-admin" class="page">
+<div class="admin-page">
+<div class="admin-wrap">
+  <div class="admin-toprow">
+    <h2 id="admin-main-title">🔐 관리자 — 지원 현황</h2>
+    <div class="admin-actions">
+      <button class="btn-back" onclick="gotoPage('page-home')">← 처음으로</button>
+    </div>
+  </div>
+
+  <!-- 구글시트 연동 상태 바 -->
+  <div id="sheets-config-bar" style="background:#fff;border:1.5px solid var(--gray-200);border-radius:14px;padding:14px 18px;margin-bottom:16px;box-shadow:0 2px 10px rgba(12,45,78,0.04);">
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+      <span style="font-size:13px;font-weight:800;color:var(--navy);">🔗 Google Sheets 연동</span>
+      <input id="admin-sheet-url" type="text" placeholder="스프레드시트 CSV URL 입력 (파일 > 웹에 게시 > CSV)"
+        style="flex:1;min-width:280px;height:38px;border:1.5px solid var(--gray-200);border-radius:10px;padding:0 12px;font-size:12px;font-family:inherit;outline:none;background:var(--gray-50);"
+        onfocus="this.style.borderColor='var(--sky)'" onblur="this.style.borderColor='var(--gray-200)'"
+        onkeydown="if(event.key==='Enter')applySheetUrl()">
+      <button onclick="applySheetUrl()" style="background:linear-gradient(135deg,var(--sky-d),var(--blue));color:#fff;border:none;padding:8px 16px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;">URL 적용 + 동기화</button>
+      <button onclick="fetchSheetData()" style="background:#fff;border:1.5px solid var(--sky);color:var(--sky-dd);padding:7px 14px;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;">🔄 지금 동기화</button>
+      <span id="admin-sync-info" style="font-size:11px;color:var(--gray-400);"></span>
+    </div>
+    <div id="sheet-url-notice" style="margin-top:8px;font-size:11px;color:var(--amber);display:none;">⚠ 구글시트를 <strong>파일 › 공유 › 웹에 게시 › 시트 선택 › CSV</strong> 로 게시한 URL을 입력하세요. 시트 첫 행이 헤더여야 합니다.</div>
+  </div>
+
+  <!-- 관리자 탭 -->
+  <div class="tab-row" style="margin-bottom:20px;">
+    <button class="tab-btn active" id="atab-data" onclick="setAdminTab('data',this)">📋 지원 현황</button>
+    <button class="tab-btn" id="atab-mgr" onclick="setAdminTab('mgr',this)">👔 직책자 관리</button>
+    <button class="tab-btn" id="atab-log" onclick="setAdminTab('log',this)">📊 접속 현황 <span class="tab-count" id="log-count-badge">0</span></button>
+  </div>
+
+  <!-- 탭: 지원 현황 -->
+  <div id="admin-panel-data">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px;">
+      <span id="data-count-badge" style="font-size:13px;font-weight:700;color:var(--navy);"></span>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn-add" onclick="openAddModal()">+ 인원 추가</button>
+        <button class="btn-template" onclick="downloadTemplate()">📋 양식 다운로드</button>
+        <button class="btn-csv" onclick="triggerXlsxUpload()" style="background:linear-gradient(135deg,#7c3aed,#6d28d9);">📥 Excel 업로드</button>
+        <button class="btn-csv" onclick="exportCSV()">⬇ CSV 다운로드</button>
+        <input type="file" id="xlsx-file-input" accept=".xlsx,.xls" style="display:none" onchange="handleXlsxUpload(event)">
+      </div>
+    </div>
+    <div class="stats-row" id="admin-stats"></div>
+    <div class="filter-row">
+      <input type="text" id="f-search" placeholder="🔍 사번 / 성명 검색" oninput="renderAdminTable()">
+      <select id="f-dept" onchange="renderAdminTable()"><option value="">전체 사업부</option></select>
+      <select id="f-status" onchange="renderAdminTable()">
+        <option value="">전체 구분</option>
+        <option value="eligible">도전 가능</option>
+        <option value="re-eval">직무 재평가</option>
+        <option value="review">확인 필요</option>
+        <option value="ineligible">도전 불가</option>
+      </select>
+      <span class="filter-count" id="f-count"></span>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>NO</th><th>사번</th><th>성명</th><th>사업부</th><th>팀</th>
+            <th>직위</th><th>현재 직무급</th><th>도전 가능 직무</th>
+            <th>2023</th><th>2024</th><th>2025</th>
+            <th>구분</th><th>도전직무</th><th>제출</th><th>비고</th><th>수정</th>
+          </tr>
+        </thead>
+        <tbody id="admin-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 탭: 직책자 관리 -->
+  <div id="admin-panel-mgr" style="display:none;">
+    <!-- 액션 바 -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px;">
+      <span style="font-size:13px;font-weight:700;color:var(--navy);">직책자 목록 <span id="mgr-count-badge" style="font-size:11px;color:var(--gray-400);font-weight:500;"></span></span>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button onclick="openMgrAddModal()" style="background:linear-gradient(135deg,#10b981,#059669);color:#fff;border:none;padding:7px 16px;border-radius:10px;font-size:13px;cursor:pointer;font-family:inherit;font-weight:700;">+ 직책자 추가</button>
+        <button onclick="openMgrResetSection()" style="background:linear-gradient(135deg,var(--sky-d),var(--blue));color:#fff;border:none;padding:7px 16px;border-radius:10px;font-size:13px;cursor:pointer;font-family:inherit;font-weight:700;">🔑 비밀번호 초기화</button>
+      </div>
+    </div>
+    <!-- 비밀번호 초기화 섹션 (토글) -->
+    <div id="mgr-reset-section" style="display:none;background:#eff6ff;border:1.5px solid #bae6fd;border-radius:12px;padding:16px 20px;margin-bottom:14px;">
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+        <span style="font-size:13px;font-weight:700;color:var(--navy);">🔑 비밀번호 사번으로 초기화</span>
+        <select id="admin-reset-sabun" style="border:1.5px solid var(--gray-200);border-radius:8px;padding:7px 10px;font-size:13px;font-family:inherit;outline:none;background:#fff;min-width:200px;">
+          <option value="">— 직책자 선택 —</option>
+        </select>
+        <button onclick="resetMgrPw()" style="background:linear-gradient(135deg,var(--sky-d),var(--blue));color:#fff;border:none;padding:7px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">초기화</button>
+        <button onclick="closeMgrResetSection()" style="background:var(--gray-100);color:var(--gray-600);border:none;padding:7px 14px;border-radius:8px;font-size:13px;cursor:pointer;font-family:inherit;">닫기</button>
+      </div>
+      <p id="reset-msg" style="margin-top:10px;font-size:13px;font-weight:700;display:none;"></p>
+    </div>
+    <!-- 직책자 테이블 -->
+    <div class="tbl-wrap">
+      <table style="min-width:700px;">
+        <thead>
+          <tr>
+            <th>사번</th><th>성명</th><th>조회 범위</th><th>사업부</th><th>팀</th><th>비밀번호</th><th>수정/삭제</th>
+          </tr>
+        </thead>
+        <tbody id="mgr-list-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 탭: 접속 현황 -->
+  <div id="admin-panel-log" style="display:none;">
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:18px;">
+      <div class="stat-card"><div class="sn" id="log-total">0</div><div class="sl">누적 접속 횟수</div></div>
+      <div class="stat-card"><div class="sn" id="log-today" style="color:var(--sky-d);">0</div><div class="sl">오늘 접속</div></div>
+      <div class="stat-card"><div class="sn" id="log-unique" style="color:var(--green);">0</div><div class="sl">접속 인원 (사번 기준)</div></div>
+    </div>
+    <div style="display:flex;gap:10px;margin-bottom:14px;align-items:center;flex-wrap:wrap;">
+      <span style="font-size:13px;font-weight:700;color:var(--navy);">접속 기록</span>
+      <span style="font-size:12px;color:var(--gray-400);">최신순 · 최대 200건 표시</span>
+      <button onclick="clearAccessLog()" style="margin-left:auto;background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;border-radius:8px;padding:5px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">🗑 기록 초기화</button>
+    </div>
+    <div class="tbl-wrap">
+      <table style="min-width:560px;">
+        <thead><tr><th>시간</th><th>유형</th><th>사번/이름</th><th>사업부/팀</th><th>조회 결과</th></tr></thead>
+        <tbody id="log-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+</div>
+</div>
+
+<!-- ══════════════════════ MANAGER PAGE ══════════════════════ -->
+<div id="page-manager" class="page">
+<div class="manager-page">
+<div class="mgr-wrap">
+  <div class="mgr-header">
+    <div class="mgr-info">
+      <div class="mgr-avatar" id="mgr-avatar">👔</div>
+      <div>
+        <div class="mgr-name" id="mgr-name-disp"></div>
+        <div class="mgr-scope" id="mgr-scope-disp"></div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+      <a href="#" onclick="(function(){window.open('https://auth.daewoong.co.kr/keycloak/realms/backoffice-sso/login-actions/authenticate?client_id=http%3A%2F%2Fwww.workday.com&tab_id=4OCL4Lrs6B4&client_data=eyJydSI6Imh0dHBzOi8vd2QxMDIubXl3b3JrZGF5LmNvbS9kYWV3b29uZy9sb2dpbi1zYW1sLmh0bWxkIiwicm0iOiJwb3N0In0','_blank');return false;})()" class="mcircle-btn" style="width:auto;padding:0 14px;height:36px;font-size:12px;text-decoration:none;">
+        🔗 이지메디컴 워크데이
+      </a>
+      <button class="btn-back" style="background:linear-gradient(135deg,var(--sky-d),var(--blue));color:#fff;border-color:transparent;" onclick="openMgrPwModal()">🔑 비밀번호 변경</button>
+      <button class="btn-back" onclick="gotoPage('page-home')">← 처음으로</button>
+    </div>
+  </div>
+  <div class="mgr-stats" id="mgr-stats"></div>
+  <div id="team-filter-wrap" style="display:none;">
+    <div class="team-filter" id="team-filter-chips"></div>
+  </div>
+  <div class="tab-row">
+    <button class="tab-btn active" onclick="setMgrTab('all',this)">전체 <span class="tab-count" id="tc-all">0</span></button>
+    <button class="tab-btn" onclick="setMgrTab('eligible',this)">✅ 도전 가능 <span class="tab-count" id="tc-eligible">0</span></button>
+    <button class="tab-btn" onclick="setMgrTab('re-eval',this)">↻ 재평가 <span class="tab-count" id="tc-re-eval">0</span></button>
+    <button class="tab-btn" onclick="setMgrTab('review',this)">⚠ 확인필요 <span class="tab-count" id="tc-review">0</span></button>
+    <button class="tab-btn" onclick="setMgrTab('ineligible',this)">✕ 도전불가 <span class="tab-count" id="tc-ineligible">0</span></button>
+  </div>
+  <div class="tbl-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>사번</th><th>성명</th><th>사업부</th><th>팀</th><th>직위</th>
+          <th>현재 직무급</th><th>도전 가능 직무</th>
+          <th>2023</th><th>2024</th><th>2025</th>
+          <th>구분</th><th>비고</th>
+        </tr>
+      </thead>
+      <tbody id="mgr-tbody"></tbody>
+    </table>
+  </div>
+</div>
+</div>
+</div>
+
+<!-- ══ 직책자 추가 모달 ══ -->
+<div class="modal-bg" id="mgr-add-modal">
+<div class="modal" style="width:540px;">
+  <h3>➕ 직책자 추가</h3>
+  <div class="form-grid">
+    <div class="form-row"><label>사번 *</label><input id="ma-sabun" placeholder="필수 · 고유"></div>
+    <div class="form-row"><label>성명 *</label><input id="ma-name" placeholder="필수"></div>
+    <div class="form-row full">
+      <label>조회 범위 *</label>
+      <select id="ma-scope" onchange="onMgrScopeChange('ma')">
+        <option value="team">팀 단위</option>
+        <option value="dept">사업부 전체</option>
+        <option value="all">전체 (대표이사 등)</option>
+      </select>
+    </div>
+    <div class="form-row" id="ma-dept-row"><label>사업부</label><input id="ma-dept" placeholder="예) 경영관리실"></div>
+    <div class="form-row" id="ma-team-row"><label>팀</label><input id="ma-team" placeholder="예) 경영지원팀 (팀 범위 시 필수)"></div>
+    <div class="form-row full"><label>범위 표시명</label><input id="ma-label" placeholder="예) 경영관리실 전체 (비워두면 자동 생성)"></div>
+  </div>
+  <div id="ma-scope-preview" style="margin-top:10px;padding:10px 14px;background:var(--ice);border-radius:8px;font-size:12px;color:var(--sky-dd);display:none;"></div>
+  <p id="ma-err" style="color:var(--red);font-size:12px;margin-top:10px;display:none;font-weight:600;"></p>
+  <div class="modal-btns">
+    <button class="mbtn-cancel" onclick="closeModal('mgr-add-modal')">취소</button>
+    <button class="mbtn-save" style="background:linear-gradient(135deg,#10b981,#059669);" onclick="saveMgrAdd()">추가</button>
+  </div>
+</div>
+</div>
+
+<!-- ══ 직책자 수정 모달 ══ -->
+<div class="modal-bg" id="mgr-edit-modal">
+<div class="modal" style="width:540px;">
+  <h3>✏️ 직책자 수정</h3>
+  <input type="hidden" id="me-sabun-orig">
+  <div class="form-grid">
+    <div class="form-row"><label>사번</label><input id="me-sabun" placeholder="사번"></div>
+    <div class="form-row"><label>성명</label><input id="me-name" placeholder="성명"></div>
+    <div class="form-row full">
+      <label>조회 범위</label>
+      <select id="me-scope" onchange="onMgrScopeChange('me')">
+        <option value="team">팀 단위</option>
+        <option value="dept">사업부 전체</option>
+        <option value="all">전체 (대표이사 등)</option>
+      </select>
+    </div>
+    <div class="form-row" id="me-dept-row"><label>사업부</label><input id="me-dept" placeholder="예) 경영관리실"></div>
+    <div class="form-row" id="me-team-row"><label>팀</label><input id="me-team" placeholder="예) 경영지원팀"></div>
+    <div class="form-row full"><label>범위 표시명</label><input id="me-label" placeholder="비워두면 자동 생성"></div>
+  </div>
+  <div id="me-scope-preview" style="margin-top:10px;padding:10px 14px;background:var(--ice);border-radius:8px;font-size:12px;color:var(--sky-dd);display:none;"></div>
+  <p id="me-err" style="color:var(--red);font-size:12px;margin-top:10px;display:none;font-weight:600;"></p>
+  <div class="modal-btns">
+    <button class="mbtn-del" onclick="deleteMgr()">🗑 삭제</button>
+    <button class="mbtn-cancel" onclick="closeModal('mgr-edit-modal')">취소</button>
+    <button class="mbtn-save" onclick="saveMgrEdit()">저장</button>
+  </div>
+</div>
+</div>
+
+
+<!-- ══ Excel 업로드 미리보기 모달 ══ -->
+<div class="modal-bg" id="upload-modal">
+<div class="modal" style="width:700px;max-width:96vw;">
+  <h3>📥 Excel 데이터 가져오기</h3>
+  <div id="upload-summary" style="margin-bottom:14px;font-size:13px;color:var(--gray-600);"></div>
+  <div style="display:flex;gap:10px;margin-bottom:12px;align-items:center;flex-wrap:wrap;">
+    <label style="font-size:12px;font-weight:700;color:var(--gray-600);">가져오기 방식</label>
+    <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:12px;">
+      <input type="radio" name="import-mode" value="merge" checked> 기존 데이터 유지 + 신규 추가
+    </label>
+    <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:12px;">
+      <input type="radio" name="import-mode" value="replace"> 기존 데이터 모두 교체
+    </label>
+  </div>
+  <div class="tbl-wrap" style="max-height:340px;overflow-y:auto;">
+    <table style="min-width:600px;">
+      <thead>
+        <tr>
+          <th>사번</th><th>성명</th><th>사업부</th><th>팀</th><th>직위</th>
+          <th>현재 직무급</th><th>도전가능직무</th><th>2023</th><th>2024</th><th>2025</th>
+          <th>구분</th><th>제출</th><th>비고</th>
+        </tr>
+      </thead>
+      <tbody id="upload-preview-tbody"></tbody>
+    </table>
+  </div>
+  <p id="upload-err" style="color:var(--red);font-size:12px;margin-top:10px;display:none;font-weight:600;"></p>
+  <div class="modal-btns">
+    <button class="mbtn-cancel" onclick="closeModal('upload-modal')">취소</button>
+    <button class="mbtn-save" id="upload-confirm-btn" onclick="confirmXlsxImport()" style="background:linear-gradient(135deg,#7c3aed,#6d28d9);">📥 가져오기 실행</button>
+  </div>
+</div>
+</div>
+
+
+<!-- ══ EDIT MODAL ══ -->
+<div class="modal-bg" id="edit-modal">
+<div class="modal">
+  <h3>✏️ 지원 정보 수정</h3>
+  <input type="hidden" id="edit-idx">
+  <div class="form-grid">
+    <div class="form-row"><label>사번</label><input id="e-sabun"></div>
+    <div class="form-row"><label>성명</label><input id="e-name"></div>
+    <div class="form-row"><label>사업부</label><input id="e-dept"></div>
+    <div class="form-row"><label>팀</label><input id="e-team"></div>
+    <div class="form-row"><label>직위</label><input id="e-pos"></div>
+    <div class="form-row"><label>사원구분</label><input id="e-emptype"></div>
+    <div class="form-row"><label>현재 직무급</label><input id="e-cur"></div>
+    <div class="form-row"><label>도전 가능 직무</label><input id="e-target"></div>
+    <div class="form-row"><label>2023 평가</label><input id="e-y23"></div>
+    <div class="form-row"><label>2024 평가</label><input id="e-y24"></div>
+    <div class="form-row"><label>2025 평가</label><input id="e-y25"></div>
+    <div class="form-row"><label>구분</label>
+      <select id="e-status">
+        <option value="eligible">도전 가능</option>
+        <option value="re-eval">직무 재평가</option>
+        <option value="review">확인 필요</option>
+        <option value="ineligible">도전 불가</option>
+      </select>
+    </div>
+    <div class="form-row"><label>도전 직무</label><input id="e-challenge"></div>
+    <div class="form-row"><label>제출 여부</label>
+      <select id="e-submit"><option value="">-</option><option value="O">O (제출)</option><option value="X">X (미제출)</option></select>
+    </div>
+    <div class="form-row full"><label>비고</label><textarea id="e-note" rows="3"></textarea></div>
+  </div>
+  <div class="modal-btns">
+    <button class="mbtn-del" onclick="deleteRecord()">🗑 삭제</button>
+    <button class="mbtn-cancel" onclick="closeModal('edit-modal')">취소</button>
+    <button class="mbtn-save" onclick="saveEdit()">저장</button>
+  </div>
+</div>
+</div>
+
+<!-- ══ ADD MODAL ══ -->
+<div class="modal-bg" id="mgr-pw-modal">
+<div class="modal" style="width:420px;">
+  <h3>🔑 직책자 비밀번호 변경</h3>
+  <div class="form-row" style="margin-bottom:14px;">
+    <label>현재 비밀번호</label>
+    <input type="password" id="mp-cur" placeholder="현재 비밀번호">
+  </div>
+  <div class="form-row" style="margin-bottom:14px;">
+    <label>새 비밀번호 <span style="color:var(--gray-400);font-weight:400;">(4자 이상)</span></label>
+    <input type="password" id="mp-new" placeholder="새 비밀번호 입력">
+  </div>
+  <div class="form-row" style="margin-bottom:0;">
+    <label>새 비밀번호 확인</label>
+    <input type="password" id="mp-confirm" placeholder="새 비밀번호 재입력">
+  </div>
+  <p id="mp-err" style="color:var(--red);font-size:12px;margin-top:8px;display:none;font-weight:600;"></p>
+  <p id="mp-ok" style="color:var(--green);font-size:12px;margin-top:8px;display:none;font-weight:700;">✅ 비밀번호가 변경되었습니다!</p>
+  <div style="background:var(--gray-50);border-radius:10px;padding:10px 14px;margin-top:12px;border:1px solid var(--gray-200);">
+    <p style="font-size:11px;color:var(--gray-400);line-height:1.6;">⚠ 변경된 비밀번호는 이 브라우저 세션에만 유지됩니다.<br>파일을 새로 열면 <strong style="color:var(--sky-dd);">초기 비밀번호(사번)로 초기화</strong>됩니다.</p>
+  </div>
+  <div class="modal-btns">
+    <button class="mbtn-cancel" onclick="closeModal('mgr-pw-modal')">닫기</button>
+    <button class="mbtn-save" onclick="saveMgrPw()">변경 완료</button>
+  </div>
+</div>
+</div>
+
+<!-- ══ ADD MODAL ══ -->
+<div class="modal-bg" id="add-modal">
+<div class="modal">
+  <h3>➕ 인원 추가</h3>
+  <div class="form-grid">
+    <div class="form-row"><label>사번 *</label><input id="a-sabun" placeholder="필수"></div>
+    <div class="form-row"><label>성명 *</label><input id="a-name" placeholder="필수"></div>
+    <div class="form-row"><label>사업부</label><input id="a-dept"></div>
+    <div class="form-row"><label>팀</label><input id="a-team"></div>
+    <div class="form-row"><label>직위</label><input id="a-pos"></div>
+    <div class="form-row"><label>사원구분</label><input id="a-emptype" placeholder="예) 정규직"></div>
+    <div class="form-row"><label>현재 직무급</label><input id="a-cur"></div>
+    <div class="form-row"><label>도전 가능 직무</label><input id="a-target"></div>
+    <div class="form-row"><label>2023 평가</label><input id="a-y23"></div>
+    <div class="form-row"><label>2024 평가</label><input id="a-y24"></div>
+    <div class="form-row"><label>2025 평가</label><input id="a-y25"></div>
+    <div class="form-row"><label>구분</label>
+      <select id="a-status">
+        <option value="eligible">도전 가능</option>
+        <option value="re-eval">직무 재평가</option>
+        <option value="review">확인 필요</option>
+        <option value="ineligible">도전 불가</option>
+      </select>
+    </div>
+    <div class="form-row"><label>도전 직무</label><input id="a-challenge"></div>
+    <div class="form-row"><label>제출 여부</label>
+      <select id="a-submit"><option value="">-</option><option value="O">O (제출)</option><option value="X">X (미제출)</option></select>
+    </div>
+    <div class="form-row full"><label>비고</label><textarea id="a-note" rows="3"></textarea></div>
+  </div>
+  <div class="modal-btns">
+    <button class="mbtn-cancel" onclick="closeModal('add-modal')">취소</button>
+    <button class="mbtn-save" style="background:linear-gradient(135deg,#10b981,#059669);" onclick="addRecord()">추가</button>
+  </div>
+</div>
+</div>
+
+<script>
+/* ════════════════════════════════════
+   DATA
+════════════════════════════════════ */
+var DATA = [];
+
+/* ════ 변화혁신사례 필요 직무급 ════ */
+var INNOV = ['잡매니저-어쏘','잡매니저-멘토','잡매니저-매니저','팀장-어쏘','팀장-멘토','팀장-매니저'];
+function needsInnov(t){ if(!t)return false; for(var i=0;i<INNOV.length;i++){if(t.indexOf(INNOV[i])!==-1)return true;} return false; }
+
+/* ════ 직책자 비밀번호 저장소 (런타임 only, 초기값=사번) ════ */
+var MGR_PASSWORDS = {}; // sabun → pw (초기: 사번과 동일, 런타임 변경 가능)
+
+/* ════ 관리자 인증 ════ */
+var ADMIN_SABUN="EZ15041391", ADMIN_PW="wlranrmq2026$$";
+
+/* ════ 직책자 목록 ════ */
+var MANAGERS=[];
+
+/* 직책자 비밀번호 조회: 변경된 게 없으면 사번이 기본 */
+function getMgrPw(sabun){
+  return MGR_PASSWORDS[sabun] !== undefined ? MGR_PASSWORDS[sabun] : sabun;
+}
+
+var currentMgr=null, mgrTab='all', mgrTeam='__all__';
+
+/* ════ ACCESS LOG ════ */
+var ACCESS_LOG = []; // {time, type, sabun, name, dept, team, result}
+var TODAY = new Date().toISOString().slice(0,10);
+
+function addLog(type, sabun, name, dept, team, result){
+  ACCESS_LOG.unshift({
+    time: new Date().toLocaleString('ko-KR'),
+    date: new Date().toISOString().slice(0,10),
+    type: type, sabun: sabun, name: name,
+    dept: dept||'', team: team||'', result: result||''
+  });
+  if(ACCESS_LOG.length > 200) ACCESS_LOG.pop();
+  // 배지 업데이트
+  document.getElementById('log-count-badge').textContent = ACCESS_LOG.length;
+}
+
+/* ════ PAGE SYSTEM ════ */
+function gotoPage(id){
+  document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+/* ════ ADMIN TAB ════ */
+function setAdminTab(tab, el){
+  ['data','mgr','log'].forEach(function(t){
+    var p=document.getElementById('admin-panel-'+t); if(p) p.style.display = t===tab ? 'block' : 'none';
+  });
+  document.querySelectorAll('#page-admin .tab-btn').forEach(function(b){b.classList.remove('active');});
+  el.classList.add('active');
+  var titles={data:'🔐 관리자 — 지원 현황', mgr:'🔐 관리자 — 직책자 관리', log:'🔐 관리자 — 접속 현황'};
+  var titleEl=document.getElementById('admin-main-title'); if(titleEl) titleEl.textContent=titles[tab]||titles.data;
+  if(tab==='log') renderLogTable();
+  if(tab==='mgr') renderMgrList();
+  if(tab==='data'){ renderAdminStats(); renderAdminTable(); }
+}
+
+/* ════ ADMIN LOGIN ════ */
+function checkAdminLogin(){
+  var s=document.getElementById('admin-sabun').value.trim();
+  var p=document.getElementById('admin-pw').value;
+  if(s===ADMIN_SABUN && p===ADMIN_PW){
+    document.getElementById('admin-err').style.display='none';
+    gotoPage('page-admin');
+    refreshDeptFilter(); renderAdminStats(); renderAdminTable();
+    // 로그: 관리자 접속
+    addLog('관리자','01231','관리자','—','—','관리자 로그인');
+    renderLogTable();
+  } else {
+    document.getElementById('admin-err').style.display='block';
+    document.getElementById('admin-pw').value='';
+    document.getElementById('admin-pw').focus();
+  }
+}
+
+/* ════ 관리자 - 직책자 PW 패널 초기화 ════ */
+function initAdminPwPanel(){ renderMgrList(); }
+
+
+/* ════ 직책자 관리 ════ */
+function buildMgrLabel(scope, dept, teams){
+  if(scope==='all') return '전체';
+  if(scope==='dept') return dept ? dept+' 전체' : '사업부 전체';
+  var tList = teams&&teams.length ? teams.join(', ') : '팀';
+  return (dept ? dept+' ' : '') + tList;
+}
+
+function parseMgrTeams(rawStr){
+  // 쉼표 구분 문자열 → 배열 (공백 제거)
+  return rawStr.split(',').map(function(t){return t.trim();}).filter(function(t){return t.length>0;});
+}
+
+function updateScopePreview(prefix){
+  var scope = document.getElementById(prefix+'-scope').value;
+  var dept  = document.getElementById(prefix+'-dept') ? document.getElementById(prefix+'-dept').value.trim() : '';
+  var teamRaw = document.getElementById(prefix+'-team') ? document.getElementById(prefix+'-team').value.trim() : '';
+  var teams = parseMgrTeams(teamRaw);
+  var preview = document.getElementById(prefix+'-scope-preview');
+  if(!preview) return;
+  var msg='';
+  if(scope==='all')  msg='📋 조회 범위: <strong>회사 전 인원</strong> 조회 가능';
+  else if(scope==='dept') msg='📋 조회 범위: <strong>'+(dept||'(사업부 미입력)')+'</strong> 소속 전 인원';
+  else if(scope==='team'){
+    if(teams.length===0) msg='📋 팀명을 입력하면 조회 범위가 표시됩니다.';
+    else if(teams.length===1) msg='📋 조회 범위: <strong>'+(dept?dept+' · ':'')+teams[0]+'</strong> 소속 인원만';
+    else msg='📋 조회 범위: <strong>'+(dept?dept+' · ':'')+teams.join(' / ')+'</strong> 소속 인원 ('+teams.length+'개 팀)';
+  }
+  preview.innerHTML=msg;
+  preview.style.display= msg ? 'block' : 'none';
+}
+
+function renderMgrList(){
+  var tb = document.getElementById('mgr-list-tbody');
+  var badge = document.getElementById('mgr-count-badge');
+  if(badge) badge.textContent = '— 총 '+MANAGERS.length+'명';
+  // reset 드롭다운도 갱신
+  var sel=document.getElementById('admin-reset-sabun');
+  if(sel){
+    sel.innerHTML='<option value="">— 직책자 선택 —</option>';
+    MANAGERS.forEach(function(m){
+      var o=document.createElement('option');
+      o.value=m.sabun; o.textContent=m.name+' ('+m.sabun+')';
+      sel.appendChild(o);
+    });
+  }
+  if(!MANAGERS.length){
+    tb.innerHTML='<tr><td colspan="7" style="text-align:center;padding:32px;color:var(--gray-400);font-size:13px;">등록된 직책자가 없습니다. 직책자를 추가해주세요.</td></tr>';
+    return;
+  }
+  tb.innerHTML=MANAGERS.map(function(m,idx){
+    var scopeLabel = m.scope==='all'?'<span style="background:#ede9fe;color:#5b21b6;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:700;">전체</span>'
+      : m.scope==='dept'?'<span style="background:#dbeafe;color:#1d4ed8;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:700;">사업부</span>'
+      : '<span style="background:#d1fae5;color:#065f46;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:700;">팀</span>';
+    var changed = MGR_PASSWORDS[m.sabun] !== undefined;
+    var pwBadge = changed
+      ? '<span class="tag tag-review" style="font-size:10px;">변경됨</span>'
+      : '<span class="tag tag-re-eval" style="font-size:10px;">초기(사번)</span>';
+    var teamStr = m.teams&&m.teams.length ? m.teams.map(function(t){
+      return '<span style="display:inline-block;background:#d1fae5;color:#065f46;padding:1px 6px;border-radius:4px;font-size:10px;margin:1px;">'+t+'</span>';
+    }).join('') : '<span style="color:var(--gray-400);font-size:11px;">-</span>';
+    return '<tr>'
+      +'<td style="font-weight:700;color:var(--sky-dd);font-size:12px;">'+m.sabun+'</td>'
+      +'<td style="font-weight:800;font-size:13px;">'+m.name+'</td>'
+      +'<td>'+scopeLabel+'</td>'
+      +'<td style="font-size:12px;color:var(--gray-600);">'+(m.depts&&m.depts.length?m.depts.join(', '):'-')+'</td>'
+      +'<td>'+teamStr+'</td>'
+      +'<td>'+pwBadge+'</td>'
+      +'<td><button class="edit-btn" onclick="openMgrEditModal('+idx+')">수정</button></td>'
+      +'</tr>';
+  }).join('');
+}
+
+function onMgrScopeChange(prefix){
+  var scope = document.getElementById(prefix+'-scope').value;
+  var deptRow = document.getElementById(prefix+'-dept-row');
+  var teamRow = document.getElementById(prefix+'-team-row');
+  if(deptRow) deptRow.style.display = scope==='all' ? 'none' : '';
+  if(teamRow) teamRow.style.display = scope==='team' ? '' : 'none';
+  updateScopePreview(prefix);
+  // 입력 변경 시 프리뷰 실시간 갱신
+  ['dept','team'].forEach(function(f){
+    var el=document.getElementById(prefix+'-'+f);
+    if(el && !el._scopeListenerSet){
+      el.addEventListener('input', function(){updateScopePreview(prefix);});
+      el._scopeListenerSet=true;
+    }
+  });
+}
+
+function openMgrAddModal(){
+  ['ma-sabun','ma-name','ma-dept','ma-team','ma-label'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
+  document.getElementById('ma-scope').value='team';
+  document.getElementById('ma-err').style.display='none';
+  onMgrScopeChange('ma');
+  updateScopePreview('ma');
+  document.getElementById('mgr-add-modal').classList.add('open');
+}
+
+function saveMgrAdd(){
+  var sabun = document.getElementById('ma-sabun').value.trim();
+  var name  = document.getElementById('ma-name').value.trim();
+  var scope = document.getElementById('ma-scope').value;
+  var dept  = document.getElementById('ma-dept').value.trim();
+  var teamRaw = document.getElementById('ma-team').value.trim();
+  var teams = parseMgrTeams(teamRaw);
+  var label = document.getElementById('ma-label').value.trim();
+  var errEl = document.getElementById('ma-err');
+  errEl.style.display='none';
+
+  if(!sabun||!name){errEl.textContent='⚠ 사번과 성명은 필수입니다.';errEl.style.display='block';return;}
+  for(var i=0;i<MANAGERS.length;i++){if(MANAGERS[i].sabun===sabun){errEl.textContent='⚠ 이미 등록된 사번입니다: '+sabun;errEl.style.display='block';return;}}
+  if(scope!=='all'&&!dept){errEl.textContent='⚠ 사업부를 입력해주세요.';errEl.style.display='block';return;}
+  if(scope==='team'&&teams.length===0){errEl.textContent='⚠ 팀 범위에는 팀명이 필요합니다. (여러 팀은 쉼표로 구분)';errEl.style.display='block';return;}
+
+  if(!label) label = buildMgrLabel(scope, dept, teams);
+  MANAGERS.push({
+    sabun: sabun, name: name, scope: scope,
+    depts: scope!=='all' ? [dept] : null,
+    teams: scope==='team' ? teams : null,
+    label: label
+  });
+  closeModal('mgr-add-modal');
+  renderMgrList();
+  alert('✅ '+name+' ('+sabun+') 직책자가 추가되었습니다.\n조회 범위: '+label);
+}
+
+function openMgrEditModal(idx){
+  var m = MANAGERS[idx];
+  document.getElementById('me-sabun-orig').value = m.sabun;
+  document.getElementById('me-sabun').value = m.sabun;
+  document.getElementById('me-name').value  = m.name;
+  document.getElementById('me-scope').value = m.scope;
+  document.getElementById('me-dept').value  = m.depts&&m.depts.length ? m.depts.join(', ') : '';
+  document.getElementById('me-team').value  = m.teams&&m.teams.length ? m.teams.join(', ') : '';
+  document.getElementById('me-label').value = m.label;
+  document.getElementById('me-err').style.display='none';
+  onMgrScopeChange('me');
+  updateScopePreview('me');
+  document.getElementById('mgr-edit-modal').classList.add('open');
+}
+
+function saveMgrEdit(){
+  var origSabun = document.getElementById('me-sabun-orig').value;
+  var sabun = document.getElementById('me-sabun').value.trim();
+  var name  = document.getElementById('me-name').value.trim();
+  var scope = document.getElementById('me-scope').value;
+  var dept  = document.getElementById('me-dept').value.trim();
+  var teamRaw = document.getElementById('me-team').value.trim();
+  var teams = parseMgrTeams(teamRaw);
+  var label = document.getElementById('me-label').value.trim();
+  var errEl = document.getElementById('me-err');
+  errEl.style.display='none';
+
+  if(!sabun||!name){errEl.textContent='⚠ 사번과 성명은 필수입니다.';errEl.style.display='block';return;}
+  if(scope!=='all'&&!dept){errEl.textContent='⚠ 사업부를 입력해주세요.';errEl.style.display='block';return;}
+  if(scope==='team'&&teams.length===0){errEl.textContent='⚠ 팀 범위에는 팀명이 필요합니다. (여러 팀은 쉼표로 구분)';errEl.style.display='block';return;}
+  for(var i=0;i<MANAGERS.length;i++){
+    if(MANAGERS[i].sabun===sabun&&sabun!==origSabun){errEl.textContent='⚠ 이미 등록된 사번입니다: '+sabun;errEl.style.display='block';return;}
+  }
+
+  if(!label) label = buildMgrLabel(scope, dept, teams);
+  var idx = -1;
+  for(var j=0;j<MANAGERS.length;j++){if(MANAGERS[j].sabun===origSabun){idx=j;break;}}
+  if(idx===-1) return;
+
+  if(sabun!==origSabun && MGR_PASSWORDS[origSabun]!==undefined){
+    MGR_PASSWORDS[sabun]=MGR_PASSWORDS[origSabun];
+    delete MGR_PASSWORDS[origSabun];
+  }
+
+  MANAGERS[idx]={sabun:sabun,name:name,scope:scope,
+    depts:scope!=='all'?[dept]:null,
+    teams:scope==='team'?teams:null,
+    label:label};
+  closeModal('mgr-edit-modal');
+  renderMgrList();
+}
+
+function deleteMgr(){
+  var origSabun = document.getElementById('me-sabun-orig').value;
+  var mgr = null;
+  for(var i=0;i<MANAGERS.length;i++){if(MANAGERS[i].sabun===origSabun){mgr=MANAGERS[i];break;}}
+  if(!mgr) return;
+  if(!confirm('삭제하시겠습니까?\n'+mgr.name+' ('+mgr.sabun+')')) return;
+  MANAGERS = MANAGERS.filter(function(m){return m.sabun!==origSabun;});
+  delete MGR_PASSWORDS[origSabun];
+  closeModal('mgr-edit-modal');
+  renderMgrList();
+}
+
+function openMgrResetSection(){
+  document.getElementById('mgr-reset-section').style.display='block';
+  document.getElementById('reset-msg').style.display='none';
+  renderMgrList(); // 드롭다운 갱신 포함
+}
+function closeMgrResetSection(){
+  document.getElementById('mgr-reset-section').style.display='none';
+}
+
+/* ════ 비밀번호 초기화 (관리자 권한) ════ */
+function resetMgrPw(){
+  var s=document.getElementById('admin-reset-sabun').value;
+  var msg=document.getElementById('reset-msg');
+  if(!s){msg.textContent='⚠ 직책자를 선택해주세요.';msg.style.color='var(--red)';msg.style.display='block';return;}
+  var mgr=null; for(var i=0;i<MANAGERS.length;i++){if(MANAGERS[i].sabun===s){mgr=MANAGERS[i];break;}}
+  if(!mgr) return;
+  // 초기화: 변경된 비번 삭제 → 사번이 기본값으로 복귀
+  delete MGR_PASSWORDS[s];
+  msg.textContent='✅ '+mgr.name+' ('+s+') 비밀번호가 사번으로 초기화되었습니다.';
+  msg.style.color='var(--green)'; msg.style.display='block';
+  renderPwStatus();
+  setTimeout(function(){msg.style.display='none';},3000);
+}
+
+/* ════ 직책자 PW 현황 테이블 ════ */
+function renderPwStatus(){
+  var tb=document.getElementById('pw-status-tbody');
+  tb.innerHTML=MANAGERS.map(function(m){
+    var changed = MGR_PASSWORDS[m.sabun] !== undefined;
+    return '<tr>'
+      +'<td style="font-weight:700;color:var(--sky-dd);">'+m.sabun+'</td>'
+      +'<td style="font-weight:800;">'+m.name+'</td>'
+      +'<td style="font-size:12px;color:var(--gray-600);">'+m.label+'</td>'
+      +'<td>'+(changed
+        ? '<span class="tag tag-review">변경됨</span>'
+        : '<span class="tag tag-re-eval">초기(사번)</span>')+'</td>'
+      +'</tr>';
+  }).join('');
+}
+
+/* ════ 접속 로그 렌더 ════ */
+function renderLogTable(){
+  // 통계
+  var total=ACCESS_LOG.length;
+  var todayLogs=ACCESS_LOG.filter(function(l){return l.date===TODAY;});
+  var sabunSet={};
+  for(var i=0;i<ACCESS_LOG.length;i++){if(ACCESS_LOG[i].sabun)sabunSet[ACCESS_LOG[i].sabun]=true;}
+  document.getElementById('log-total').textContent=total;
+  document.getElementById('log-today').textContent=todayLogs.length;
+  document.getElementById('log-unique').textContent=Object.keys(sabunSet).length;
+
+  var tb=document.getElementById('log-tbody');
+  if(!ACCESS_LOG.length){
+    tb.innerHTML='<tr><td colspan="5" style="text-align:center;padding:28px;color:var(--gray-400);font-size:13px;">접속 기록이 없습니다.</td></tr>';
+    return;
+  }
+  var typeColor={팀원:'tag-eligible',직책자:'tag-re-eval',관리자:'tag-review'};
+  tb.innerHTML=ACCESS_LOG.map(function(l){
+    return '<tr>'
+      +'<td style="font-size:11px;color:var(--gray-600);white-space:nowrap;">'+l.time+'</td>'
+      +'<td><span class="tag '+(typeColor[l.type]||'')+'" style="font-size:10px;">'+l.type+'</span></td>'
+      +'<td style="font-weight:700;font-size:12px;">'+l.name+(l.sabun&&l.name!==l.sabun?' <span style="color:var(--gray-400);font-weight:400;font-size:11px;">('+l.sabun+')</span>':'')+'</td>'
+      +'<td style="font-size:11px;color:var(--gray-600);">'+(l.dept||'')+(l.team?' / '+l.team:'')+'</td>'
+      +'<td style="font-size:11px;color:var(--gray-600);">'+l.result+'</td>'
+      +'</tr>';
+  }).join('');
+}
+function clearAccessLog(){
+  if(confirm('접속 기록을 전체 초기화하시겠습니까?')){
+    ACCESS_LOG.length=0;
+    document.getElementById('log-count-badge').textContent=0;
+    renderLogTable();
+  }
+}
+
+/* ════ MANAGER LOGIN ════ */
+function checkManagerLogin(){
+  var s=document.getElementById('mgr-sabun').value.trim();
+  var p=document.getElementById('mgr-pw').value;
+  var mgr=null;
+  for(var i=0;i<MANAGERS.length;i++){if(MANAGERS[i].sabun===s){mgr=MANAGERS[i];break;}}
+  var correctPw = getMgrPw(s); // 초기: 사번, 변경 시: 변경된 비밀번호
+  if(mgr && p===correctPw){
+    currentMgr=mgr;
+    document.getElementById('mgr-err').style.display='none';
+    addLog('직책자', mgr.sabun, mgr.name, mgr.label, '', '직책자 로그인');
+    gotoPage('page-manager');
+    initMgrView();
+  } else {
+    document.getElementById('mgr-err').style.display='block';
+    document.getElementById('mgr-pw').value='';
+    document.getElementById('mgr-pw').focus();
+  }
+}
+
+/* ════ 비밀번호 변경 (로그인 페이지 인라인) ════ */
+function togglePwChange(){
+  var box=document.getElementById('pw-change-box');
+  box.style.display = box.style.display==='none' ? 'block' : 'none';
+  // 에러/성공 메시지 초기화
+  document.getElementById('pc-err').style.display='none';
+  document.getElementById('pc-ok').style.display='none';
+  ['pc-sabun','pc-cur','pc-new','pc-confirm'].forEach(function(id){document.getElementById(id).value='';});
+}
+function changeMgrPw(){
+  var s=document.getElementById('pc-sabun').value.trim();
+  var cur=document.getElementById('pc-cur').value;
+  var nw=document.getElementById('pc-new').value;
+  var cf=document.getElementById('pc-confirm').value;
+  var errEl=document.getElementById('pc-err');
+  var okEl=document.getElementById('pc-ok');
+  errEl.style.display='none'; okEl.style.display='none';
+
+  // 검증
+  var mgr=null; for(var i=0;i<MANAGERS.length;i++){if(MANAGERS[i].sabun===s){mgr=MANAGERS[i];break;}}
+  if(!mgr){errEl.textContent='⚠ 등록된 직책자 사번이 아닙니다.';errEl.style.display='block';return;}
+  if(cur!==getMgrPw(s)){errEl.textContent='⚠ 현재 비밀번호가 올바르지 않습니다.';errEl.style.display='block';return;}
+  if(nw.length<4){errEl.textContent='⚠ 새 비밀번호는 4자 이상이어야 합니다.';errEl.style.display='block';return;}
+  if(nw!==cf){errEl.textContent='⚠ 새 비밀번호가 일치하지 않습니다.';errEl.style.display='block';return;}
+
+  MGR_PASSWORDS[s]=nw;
+  okEl.style.display='block';
+  setTimeout(function(){
+    document.getElementById('pw-change-box').style.display='none';
+    okEl.style.display='none';
+  }, 2000);
+}
+
+/* ════ 비밀번호 변경 모달 (직책자 화면 내) ════ */
+function openMgrPwModal(){
+  ['mp-cur','mp-new','mp-confirm'].forEach(function(id){document.getElementById(id).value='';});
+  document.getElementById('mp-err').style.display='none';
+  document.getElementById('mp-ok').style.display='none';
+  document.getElementById('mgr-pw-modal').classList.add('open');
+}
+function saveMgrPw(){
+  var cur=document.getElementById('mp-cur').value;
+  var nw=document.getElementById('mp-new').value;
+  var cf=document.getElementById('mp-confirm').value;
+  var errEl=document.getElementById('mp-err');
+  var okEl=document.getElementById('mp-ok');
+  errEl.style.display='none'; okEl.style.display='none';
+  if(!currentMgr){return;}
+  if(cur!==getMgrPw(currentMgr.sabun)){errEl.textContent='⚠ 현재 비밀번호가 올바르지 않습니다.';errEl.style.display='block';return;}
+  if(nw.length<4){errEl.textContent='⚠ 새 비밀번호는 4자 이상이어야 합니다.';errEl.style.display='block';return;}
+  if(nw!==cf){errEl.textContent='⚠ 새 비밀번호가 일치하지 않습니다.';errEl.style.display='block';return;}
+  MGR_PASSWORDS[currentMgr.sabun]=nw;
+  okEl.style.display='block';
+  setTimeout(function(){closeModal('mgr-pw-modal');},1800);
+}
+
+/* ════ 유틸 ════ */
+function gc(g){
+  if(!g||g===''||g==='-')return 'gN';
+  if(g[0]==='A')return 'gA';
+  if(g[0]==='B')return 'gB';
+  return 'gC';
+}
+function gc2(g){ return gc(g)+'2'; }
+function avatarBg(s){
+  var c=['#0ea5e9','#3b82f6','#8b5cf6','#06b6d4','#0369a1'];
+  var n=0; for(var i=0;i<s.length;i++)n+=s.charCodeAt(i);
+  return c[n%c.length];
+}
+function statusInfo(st){
+  var m={
+    eligible:{cls:'s-eligible',icon:'✅',title:'직무급 도전 가능'},
+    're-eval':{cls:'s-re-eval',icon:'↻',title:'직무 재평가 대상'},
+    review:{cls:'s-review',icon:'⚠',title:'확인 필요'},
+    ineligible:{cls:'s-ineligible',icon:'✕',title:'도전 불가 (지원기준 미달)'}
+  };
+  return m[st]||m.ineligible;
+}
+function tagHTML(st){
+  var m={eligible:'tag-eligible',ineligible:'tag-ineligible','re-eval':'tag-re-eval',review:'tag-review'};
+  var l={eligible:'도전 가능',ineligible:'도전 불가','re-eval':'직무 재평가',review:'확인 필요'};
+  return '<span class="tag '+(m[st]||'')+'">'+(l[st]||'-')+'</span>';
+}
+function gradeChip(g,v){return '<span class="grade-chip '+gc2(g)+'">'+(v||'-')+'</span>';}
+
+/* ════ 팀원 조회 ════ */
+function doSearch(){
+  var q=document.getElementById('sabun-input').value.trim();
+  var area=document.getElementById('result-area');
+  if(!q){area.innerHTML='<p style="text-align:center;color:var(--gray-400);font-size:13px;padding:20px;">사번을 입력해주세요.</p>';return;}
+  var p=null;
+  for(var i=0;i<DATA.length;i++){if(DATA[i].sabun===q){p=DATA[i];break;}}
+  if(!p){
+    addLog('팀원', q, '미조회', '—', '—', '사번 없음');
+    area.innerHTML='<div class="result-card" style="text-align:center;padding:32px;">'
+      +'<div style="font-size:48px;margin-bottom:14px;">🔍</div>'
+      +'<p style="font-size:16px;font-weight:800;color:var(--navy);margin-bottom:8px;">조회 결과 없음</p>'
+      +'<p style="font-size:13px;color:var(--gray-600);line-height:1.7;margin-bottom:16px;">입력하신 사번 <strong style="color:var(--navy);">'+q+'</strong>은(는)<br>지원 현황 명단에 없습니다.</p>'
+      +'<div class="contact-box"><div class="ct">📞 인사팀 우아해에게 문의주시기 바랍니다.</div><div class="cs">사번 오류 또는 명단 미등록 시 인사팀으로 연락 바랍니다.</div></div>'
+      +'</div>';
+    return;
+  }
+  var si=statusInfo(p.status);
+  // 접속 로그 기록
+  var statusLabel2={eligible:'도전 가능',ineligible:'도전 불가','re-eval':'직무 재평가',review:'확인 필요'};
+  addLog('팀원', p.sabun, p.name, p.dept, p.team, statusLabel2[p.status]||p.status);
+  var evals=['2023','2024','2025'].map(function(y,i){var v=[p.y23,p.y24,p.y25][i];return '<div class="eval-chip '+gc(v)+'"><div class="ey">'+y+'</div><div class="eg">'+(v||'-')+'</div></div>';}).join('');
+  var targetBox=p.target?'<div class="target-box"><div class="tl">도전 가능 직무</div><div class="tv">'+p.target+'</div></div>':'';
+  var innovBox='';
+  if((p.status==='eligible'||p.status==='re-eval')&&needsInnov(p.target)){
+    innovBox='<div class="innov-box"><div class="ih">📋 변화혁신사례 제출 필요</div>'
+      +'<div class="ib">도전하시는 직무급(<strong>'+p.target+'</strong>)은 <strong>변화혁신사례</strong>를 반드시 준비하셔야 합니다.<br><br>'
+      +'⚠ <strong>2025년에 완료된 과제</strong>를 기반으로 준비해 주세요.<br>'
+      +'2026년 현재 진행 중인 과제는 인정되지 않으며, <strong>2025년 완료 사례</strong>만 제출 가능합니다.</div></div>';
+  }
+  area.innerHTML='<div class="result-card">'
+    +'<div class="person-hdr">'
+    +'<div class="avatar" style="background:'+avatarBg(p.name)+';">'+p.name.charAt(0)+'</div>'
+    +'<div><div class="person-name">'+p.name+' <span style="font-size:13px;font-weight:400;color:var(--gray-400);">'+p.sabun+'</span></div>'
+    +'<div class="person-meta">'+p.dept+' · '+p.team+' · '+p.pos+'</div></div></div>'
+    +'<div class="status-bar '+si.cls+'"><div class="status-icon">'+si.icon+'</div>'
+    +'<div><div class="status-title">'+si.title+'</div><div class="status-reason">'+(p.note||'')+'</div></div></div>'
+    +'<div class="detail-grid">'
+    +'<div class="detail-item"><div class="dl">현재 직무급</div><div class="dv">'+(p.cur||'해당 없음')+'</div></div>'
+    +'<div class="detail-item"><div class="dl">사업부</div><div class="dv">'+p.dept+'</div></div>'
+    +'<div class="detail-item"><div class="dl">팀</div><div class="dv">'+p.team+'</div></div>'
+    +'<div class="detail-item"><div class="dl">직위</div><div class="dv">'+p.pos+'</div></div>'
+    +'</div>'
+    +'<div class="eval-row">'+evals+'</div>'
+    +targetBox+innovBox+'</div>';
+}
+document.getElementById('sabun-input').addEventListener('keydown',function(e){if(e.key==='Enter')doSearch();});
+
+/* ════ ADMIN ════ */
+function refreshDeptFilter(){
+  var map={};
+  for(var i=0;i<DATA.length;i++)map[DATA[i].dept]=true;
+  var depts=Object.keys(map).sort();
+  var sel=document.getElementById('f-dept'), cur=sel.value;
+  sel.innerHTML='<option value="">전체 사업부</option>';
+  for(var j=0;j<depts.length;j++){var o=document.createElement('option');o.value=depts[j];o.textContent=depts[j];if(depts[j]===cur)o.selected=true;sel.appendChild(o);}
+}
+function renderAdminStats(){
+  var el=document.getElementById('admin-stats');
+  var t=DATA.length, e=0,r=0,v=0,n=0;
+  for(var i=0;i<DATA.length;i++){var s=DATA[i].status;if(s==='eligible')e++;else if(s==='re-eval')r++;else if(s==='review')v++;else n++;}
+  el.innerHTML='<div class="stat-card"><div class="sn">'+t+'</div><div class="sl">전체 인원</div></div>'
+    +'<div class="stat-card"><div class="sn" style="color:var(--green);">'+e+'</div><div class="sl">도전 가능</div></div>'
+    +'<div class="stat-card"><div class="sn" style="color:var(--blue);">'+(r+v)+'</div><div class="sl">재평가/확인필요</div></div>'
+    +'<div class="stat-card"><div class="sn" style="color:var(--red);">'+n+'</div><div class="sl">도전 불가</div></div>';
+}
+function renderAdminTable(){
+  var q=(document.getElementById('f-search').value||'').toLowerCase();
+  var dept=document.getElementById('f-dept').value;
+  var st=document.getElementById('f-status').value;
+  var rows=DATA.filter(function(d){
+    return (!q||(d.sabun.toLowerCase().indexOf(q)!==-1||d.name.toLowerCase().indexOf(q)!==-1))
+      &&(!dept||d.dept===dept)&&(!st||d.status===st);
+  });
+  document.getElementById('f-count').textContent='검색결과: '+rows.length+'명';
+  var tb=document.getElementById('admin-tbody');
+  tb.innerHTML=rows.map(function(d){
+    var ri=DATA.indexOf(d);
+    return '<tr>'
+      +'<td style="color:var(--gray-400);">'+(d.no>0?d.no:'-')+'</td>'
+      +'<td style="font-weight:700;color:var(--sky-dd);">'+d.sabun+'</td>'
+      +'<td style="font-weight:800;">'+d.name+'</td>'
+      +'<td style="font-size:11px;color:var(--gray-600);">'+d.dept+'</td>'
+      +'<td style="font-size:11px;color:var(--gray-600);">'+d.team+'</td>'
+      +'<td>'+d.pos+'</td>'
+      +'<td style="font-size:11px;">'+(d.cur||'-')+'</td>'
+      +'<td style="font-size:11px;font-weight:700;color:var(--navy);">'+(d.target||'-')+'</td>'
+      +'<td>'+gradeChip(d.y23,d.y23)+'</td>'
+      +'<td>'+gradeChip(d.y24,d.y24)+'</td>'
+      +'<td>'+gradeChip(d.y25,d.y25)+'</td>'
+      +'<td>'+tagHTML(d.status)+'</td>'
+      +'<td style="font-size:11px;">'+(d.challenge||'-')+'</td>'
+      +'<td style="font-size:11px;text-align:center;">'+(d.submit||'-')+'</td>'
+      +'<td style="font-size:11px;max-width:160px;white-space:normal;color:var(--gray-600);">'+(d.note||'')+'</td>'
+      +'<td><button class="edit-btn" onclick="openEdit('+ri+')">수정</button></td>'
+      +'</tr>';
+  }).join('');
+}
+function openEdit(idx){
+  var d=DATA[idx];
+  document.getElementById('edit-idx').value=idx;
+  ['sabun','name','dept','team','pos','emptype','cur','target','y23','y24','y25','status','challenge','submit','note'].forEach(function(k){
+    var el=document.getElementById('e-'+k); if(el)el.value=d[k]||'';
+  });
+  document.getElementById('edit-modal').classList.add('open');
+}
+function saveEdit(){
+  var idx=parseInt(document.getElementById('edit-idx').value);
+  ['sabun','name','dept','team','pos','emptype','cur','target','y23','y24','y25','status','challenge','submit','note'].forEach(function(k){
+    var el=document.getElementById('e-'+k); if(el)DATA[idx][k]=el.value.trim()||el.value;
+  });
+  closeModal('edit-modal'); renderAdminStats(); renderAdminTable(); refreshDeptFilter();
+}
+function deleteRecord(){
+  var idx=parseInt(document.getElementById('edit-idx').value);
+  if(confirm('삭제하시겠습니까?\n'+DATA[idx].name+' ('+DATA[idx].sabun+')')){
+    DATA.splice(idx,1); closeModal('edit-modal'); renderAdminStats(); renderAdminTable(); refreshDeptFilter();
+  }
+}
+function openAddModal(){
+  ['a-sabun','a-name','a-dept','a-team','a-pos','a-emptype','a-cur','a-target','a-y23','a-y24','a-y25','a-challenge','a-note'].forEach(function(id){document.getElementById(id).value='';});
+  document.getElementById('a-status').value='eligible';
+  document.getElementById('a-submit').value='';
+  document.getElementById('add-modal').classList.add('open');
+}
+function addRecord(){
+  var s=document.getElementById('a-sabun').value.trim();
+  var n=document.getElementById('a-name').value.trim();
+  if(!s||!n){alert('사번과 성명은 필수입니다.');return;}
+  for(var i=0;i<DATA.length;i++){if(DATA[i].sabun===s){alert('이미 등록된 사번: '+s);return;}}
+  var nr={no:-1,sabun:s,name:n,
+    dept:document.getElementById('a-dept').value.trim(),
+    team:document.getElementById('a-team').value.trim(),
+    pos:document.getElementById('a-pos').value.trim(),
+    emptype:document.getElementById('a-emptype').value.trim(),
+    cur:document.getElementById('a-cur').value.trim(),
+    target:document.getElementById('a-target').value.trim(),
+    y23:document.getElementById('a-y23').value.trim(),
+    y24:document.getElementById('a-y24').value.trim(),
+    y25:document.getElementById('a-y25').value.trim(),
+    status:document.getElementById('a-status').value,
+    challenge:document.getElementById('a-challenge').value.trim(),
+    submit:document.getElementById('a-submit').value,
+    note:document.getElementById('a-note').value.trim()
+  };
+  DATA.unshift(nr); closeModal('add-modal'); renderAdminStats(); renderAdminTable(); refreshDeptFilter();
+  alert('✅ '+n+' ('+s+') 추가 완료');
+}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+function exportCSV(){
+  var h=['사번','성명','사업부','팀','직위','사원구분','현재직무급','도전가능직무','2023','2024','2025','구분','도전직무','제출여부','비고'];
+  var rows=DATA.map(function(d){return [d.sabun,d.name,d.dept,d.team,d.pos,d.emptype,d.cur,d.target,d.y23,d.y24,d.y25,d.status,d.challenge,d.submit,d.note].map(function(v){return '"'+(v||'')+'"';}).join(',');});
+  var a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,\uFEFF'+encodeURIComponent(h.join(',')+'\n'+rows.join('\n'));
+  a.download='직무급지원현황_'+new Date().toISOString().slice(0,10)+'.csv'; a.click();
+}
+
+/* ════ MANAGER ════ */
+function getMgrData(){
+  var m=currentMgr; if(!m)return [];
+  if(m.scope==='all')return DATA;
+  return DATA.filter(function(d){
+    var dm = !m.depts || m.depts.indexOf(d.dept)!==-1;
+    var tm = !m.teams || m.teams.length===0 || m.teams.indexOf(d.team)!==-1;
+    if(m.scope==='dept') return dm;
+    if(m.scope==='team') return dm && tm;
+    return true;
+  });
+}
+function getFilteredMgr(){
+  var base=getMgrData();
+  if(mgrTeam!=='__all__')base=base.filter(function(d){return d.team===mgrTeam;});
+  return base;
+}
+function initMgrView(){
+  var m=currentMgr; mgrTab='all'; mgrTeam='__all__';
+  var av=document.getElementById('mgr-avatar');
+  av.textContent=m.name.charAt(0);
+  av.style.background=m.scope==='all'?'linear-gradient(135deg,#8b5cf6,#6d28d9)':'linear-gradient(135deg,var(--sky),var(--blue))';
+  document.getElementById('mgr-name-disp').textContent=m.name+' 직책자';
+  document.getElementById('mgr-scope-disp').textContent='📋 조회 범위: '+m.label;
+  var base=getMgrData();
+  var tw=document.getElementById('team-filter-wrap');
+  var tmap={};
+  for(var i=0;i<base.length;i++)tmap[base[i].team]=true;
+  var teams=Object.keys(tmap).sort();
+  if((m.scope==='dept'||m.scope==='all')&&teams.length>1){
+    tw.style.display='block';
+    var html='<button class="team-chip active" onclick="setMgrTeam(\'__all__\',this)">전체 팀</button>';
+    for(var j=0;j<teams.length;j++)html+='<button class="team-chip" onclick="setMgrTeam(\''+teams[j]+'\',this)">'+teams[j]+'</button>';
+    document.getElementById('team-filter-chips').innerHTML=html;
+  } else tw.style.display='none';
+  var tabs=document.querySelectorAll('.tab-btn');
+  for(var k=0;k<tabs.length;k++)tabs[k].classList.remove('active');
+  tabs[0].classList.add('active');
+  renderMgrStats(); renderMgrTable();
+}
+function setMgrTeam(t,el){
+  mgrTeam=t;
+  var chips=document.querySelectorAll('.team-chip');
+  for(var i=0;i<chips.length;i++)chips[i].classList.remove('active');
+  el.classList.add('active');
+  renderMgrStats(); renderMgrTable();
+}
+function setMgrTab(t,el){
+  mgrTab=t;
+  var tabs=document.querySelectorAll('.tab-btn');
+  for(var i=0;i<tabs.length;i++)tabs[i].classList.remove('active');
+  el.classList.add('active');
+  renderMgrTable();
+}
+function renderMgrStats(){
+  var data=getFilteredMgr();
+  var t=data.length,e=0,r=0,v=0,n=0;
+  for(var i=0;i<data.length;i++){var s=data[i].status;if(s==='eligible')e++;else if(s==='re-eval')r++;else if(s==='review')v++;else n++;}
+  document.getElementById('mgr-stats').innerHTML=
+    '<div class="mgr-stat"><div class="sn">'+t+'</div><div class="sl">전체 인원</div></div>'
+    +'<div class="mgr-stat"><div class="sn" style="color:var(--green);">'+e+'</div><div class="sl">도전 가능</div></div>'
+    +'<div class="mgr-stat"><div class="sn" style="color:var(--blue);">'+(r+v)+'</div><div class="sl">재평가/확인필요</div></div>'
+    +'<div class="mgr-stat"><div class="sn" style="color:var(--red);">'+n+'</div><div class="sl">도전 불가</div></div>';
+  document.getElementById('tc-all').textContent=t;
+  document.getElementById('tc-eligible').textContent=e;
+  document.getElementById('tc-re-eval').textContent=r+v;
+  document.getElementById('tc-review').textContent=v;
+  document.getElementById('tc-ineligible').textContent=n;
+}
+function renderMgrTable(){
+  var data=getFilteredMgr();
+  var rows=data.filter(function(d){
+    if(mgrTab==='all')return true;
+    if(mgrTab==='re-eval')return d.status==='re-eval'||d.status==='review';
+    return d.status===mgrTab;
+  });
+  var tb=document.getElementById('mgr-tbody');
+  if(!rows.length){tb.innerHTML='<tr><td colspan="12" style="text-align:center;padding:32px;color:var(--gray-400);font-size:13px;">해당 조건의 인원이 없습니다.</td></tr>';return;}
+  tb.innerHTML=rows.map(function(d){
+    var bg=d.status==='eligible'?'background:#f0fdf4;':d.status==='re-eval'?'background:#eff6ff;':d.status==='review'?'background:#fffbeb;':'';
+    return '<tr style="'+bg+'">'
+      +'<td style="font-weight:700;color:var(--sky-dd);font-size:12px;">'+d.sabun+'</td>'
+      +'<td style="font-weight:800;font-size:13px;">'+d.name+'</td>'
+      +'<td style="font-size:11px;color:var(--gray-600);">'+d.dept+'</td>'
+      +'<td style="font-size:11px;color:var(--gray-600);">'+d.team+'</td>'
+      +'<td style="font-size:12px;">'+d.pos+'</td>'
+      +'<td style="font-size:11px;">'+(d.cur||'-')+'</td>'
+      +'<td style="font-size:11px;font-weight:700;color:var(--navy);">'+(d.target||'-')+'</td>'
+      +'<td>'+gradeChip(d.y23,d.y23)+'</td>'
+      +'<td>'+gradeChip(d.y24,d.y24)+'</td>'
+      +'<td>'+gradeChip(d.y25,d.y25)+'</td>'
+      +'<td>'+tagHTML(d.status)+'</td>'
+      +'<td style="font-size:11px;color:var(--gray-600);max-width:160px;white-space:normal;">'+(d.note||'')+'</td>'
+      +'</tr>';
+  }).join('');
+}
+
+/* ════ Excel 업로드 가져오기 ════ */
+var PENDING_IMPORT = [];
+
+function triggerXlsxUpload(){
+  document.getElementById('xlsx-file-input').value='';
+  document.getElementById('xlsx-file-input').click();
+}
+
+function handleXlsxUpload(evt){
+  var file = evt.target.files[0];
+  if(!file) return;
+  if(typeof XLSX === 'undefined'){
+    alert('라이브러리 로드 중입니다. 잠시 후 다시 시도해주세요.'); return;
+  }
+  var reader = new FileReader();
+  reader.onload = function(e){
+    try{
+      var wb = XLSX.read(e.target.result, {type:'binary'});
+      // "직원 데이터 입력" 시트 우선, 없으면 첫 번째
+      var sheetName = wb.SheetNames.indexOf('직원 데이터 입력') !== -1
+        ? '직원 데이터 입력' : wb.SheetNames[0];
+      var ws = wb.Sheets[sheetName];
+      // header: 3번째 행이 컬럼명 (row index 2), 데이터는 5번째 행부터 (row index 4)
+      var rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
+
+      // 헤더 찾기 (사번 ★ 또는 사번 이 있는 행)
+      var dataStart = -1;
+      for(var ri=0; ri<rows.length; ri++){
+        var row = rows[ri];
+        for(var ci=0; ci<row.length; ci++){
+          var v = String(row[ci]).replace('★','').trim();
+          if(v==='사번'){dataStart=ri+2; break;}  // 가이드행 건너뜀
+        }
+        if(dataStart!==-1) break;
+      }
+      if(dataStart===-1) dataStart = 5; // 기본값: 6번째 행(index 5)
+
+      var imported = [];
+      var errRows = [];
+      for(var ri2=dataStart; ri2<rows.length; ri2++){
+        var r = rows[ri2];
+        // 완전 빈 행 스킵
+        var allEmpty = true;
+        for(var ci2=0;ci2<r.length;ci2++){if(String(r[ci2]).trim()!=''){allEmpty=false;break;}}
+        if(allEmpty) continue;
+
+        var sabun  = String(r[1]||'').trim();
+        var name   = String(r[2]||'').trim();
+        if(!sabun && !name) continue;
+        if(!sabun || !name){errRows.push('행 '+(ri2+1)+': 사번 또는 성명 누락');continue;}
+
+        var status = String(r[12]||'eligible').trim();
+        var validStatuses = ['eligible','re-eval','review','ineligible'];
+        if(validStatuses.indexOf(status)===-1) status='eligible';
+
+        imported.push({
+          no: -1,
+          sabun:  sabun,
+          name:   name,
+          dept:   String(r[3]||'').trim(),
+          team:   String(r[4]||'').trim(),
+          pos:    String(r[5]||'').trim(),
+          emptype:String(r[6]||'').trim(),
+          cur:    String(r[7]||'').trim(),
+          target: String(r[8]||'').trim(),
+          y23:    String(r[9]||'').trim(),
+          y24:    String(r[10]||'').trim(),
+          y25:    String(r[11]||'').trim(),
+          status: status,
+          challenge:String(r[13]||'').trim(),
+          submit: String(r[14]||'').trim(),
+          note:   String(r[15]||'').trim()
+        });
+      }
+
+      if(!imported.length){
+        alert('가져올 데이터가 없습니다.\n사번과 성명이 입력된 행을 확인해주세요.'); return;
+      }
+
+      PENDING_IMPORT = imported;
+
+      // 미리보기 렌더
+      var tbody = document.getElementById('upload-preview-tbody');
+      tbody.innerHTML = imported.map(function(d){
+        return '<tr>'
+          +'<td style="font-size:11px;font-weight:700;color:var(--sky-dd);">'+d.sabun+'</td>'
+          +'<td style="font-size:12px;font-weight:800;">'+d.name+'</td>'
+          +'<td style="font-size:11px;">'+d.dept+'</td>'
+          +'<td style="font-size:11px;">'+d.team+'</td>'
+          +'<td style="font-size:11px;">'+d.pos+'</td>'
+          +'<td style="font-size:11px;">'+(d.cur||'-')+'</td>'
+          +'<td style="font-size:11px;">'+(d.target||'-')+'</td>'
+          +'<td>'+gradeChip(d.y23,d.y23)+'</td>'
+          +'<td>'+gradeChip(d.y24,d.y24)+'</td>'
+          +'<td>'+gradeChip(d.y25,d.y25)+'</td>'
+          +'<td>'+tagHTML(d.status)+'</td>'
+          +'<td style="font-size:11px;">'+(d.submit||'-')+'</td>'
+          +'<td style="font-size:11px;max-width:120px;white-space:normal;color:var(--gray-600);">'+(d.note||'')+'</td>'
+          +'</tr>';
+      }).join('');
+
+      var summary = '<strong>'+imported.length+'건</strong> 인식됨';
+      if(errRows.length) summary += ' &nbsp;|&nbsp; <span style="color:var(--red);">⚠ '+errRows.length+'건 오류</span>';
+      if(errRows.length) summary += '<br><small style="color:var(--red);">'+errRows.slice(0,3).join(' / ')+(errRows.length>3?' 외 '+(errRows.length-3)+'건':'')+'</small>';
+      document.getElementById('upload-summary').innerHTML = '<span style="color:var(--green);font-weight:700;">📄 '+file.name+'</span> — '+summary;
+      document.getElementById('upload-err').style.display='none';
+      document.getElementById('upload-modal').classList.add('open');
+
+    }catch(err){
+      alert('파일 읽기 오류: '+err.message);
+    }
+  };
+  reader.readAsBinaryString(file);
+}
+
+function confirmXlsxImport(){
+  if(!PENDING_IMPORT.length){alert('가져올 데이터가 없습니다.');return;}
+  var mode = document.querySelector('input[name="import-mode"]:checked').value;
+
+  if(mode==='replace'){
+    if(!confirm('기존 지원 현황 데이터 전체를 삭제하고 새 데이터 '+PENDING_IMPORT.length+'건으로 교체합니다.\n계속하시겠습니까?')) return;
+    DATA = PENDING_IMPORT.slice();
+  } else {
+    // 사번 중복 제외하고 신규만 추가
+    var added=0, dup=0;
+    var existing={};
+    for(var i=0;i<DATA.length;i++) existing[DATA[i].sabun]=true;
+    PENDING_IMPORT.forEach(function(d){
+      if(existing[d.sabun]){ dup++; } else { DATA.push(d); added++; }
+    });
+    if(dup>0) alert('중복 사번 '+dup+'건은 건너뛰었습니다. 신규 '+added+'건 추가됨.');
+  }
+
+  PENDING_IMPORT = [];
+  closeModal('upload-modal');
+  refreshDeptFilter();
+  renderAdminStats();
+  renderAdminTable();
+  alert('✅ 가져오기 완료! 총 '+DATA.length+'명 등록됨.');
+}
+
+/* ════════════════════════════════════
+   GOOGLE SHEETS 실시간 연동
+════════════════════════════════════ */
+
+/* ▼ 배포 전 설정: 구글시트 CSV URL을 아래에 입력하세요
+   (시트 > 파일 > 공유 > 웹에 게시 > 해당 시트 선택 > CSV > URL 복사)
+   헤더 행(1행)이 반드시 있어야 합니다.
+   필수 헤더: 사번, 성명 / 선택: 사업부,팀,직위,사원구분,현재직무급,도전가능직무,2023,2024,2025,구분,도전직무,제출,비고
+*/
+var SHEET_DATA_URL = "https://script.google.com/macros/s/AKfycby3N_nJtPXPVUy5eksef3q0tzRcRMTS1k2tWNDRUCENTgF-TnJJZtgtrAgYRBw4M2iSIw/exec";
+
+var SYNC_INTERVAL_MS = 120000; // 자동 동기화 주기: 2분
+var _syncTimer = null;
+var _lastSyncTime = null;
+var _syncCount = 0;
+
+/* 헤더명 → DATA 객체 필드명 매핑 (다양한 표기 허용) */
+var _COL_MAP = {
+  '사번':'sabun','성명':'name','사업부':'dept','팀':'team',
+  '직위':'pos','사원구분':'emptype',
+  '현재직무급':'cur','현재 직무급':'cur',
+  '도전가능직무':'target','도전 가능 직무':'target',
+  '2023':'y23','2024':'y24','2025':'y25',
+  '구분':'status',
+  '도전직무':'challenge','도전 직무':'challenge',
+  '제출':'submit','제출여부':'submit','제출 여부':'submit',
+  '비고':'note'
+};
+
+/* 상태값 정규화 (한글 → 코드) */
+var _STATUS_MAP = {
+  '도전 가능':'eligible','도전가능':'eligible','eligible':'eligible',
+  '직무 재평가':'re-eval','직무재평가':'re-eval','재평가':'re-eval','re-eval':'re-eval',
+  '확인 필요':'review','확인필요':'review','review':'review',
+  '도전 불가':'ineligible','도전불가':'ineligible','불가':'ineligible','ineligible':'ineligible'
+};
+
+/* CSV 한 행 파싱 (쌍따옴표 내 쉼표·개행 처리) */
+function _parseCSVRow(line){
+  var result=[],cur='',inQ=false;
+  for(var i=0;i<line.length;i++){
+    var c=line[i];
+    if(c==='"'){
+      if(inQ&&line[i+1]==='"'){cur+='"';i++;}
+      else inQ=!inQ;
+    }else if(c===','&&!inQ){result.push(cur);cur='';}
+    else{cur+=c;}
+  }
+  result.push(cur);
+  return result;
+}
+
+/* CSV 전체 → DATA[] 변환 */
+function _csvToData(csvText){
+  var lines=csvText.split(/\r?\n/);
+  if(lines.length<2)return[];
+  var headers=_parseCSVRow(lines[0]).map(function(h){return h.trim().replace(/^﻿/,'');});
+  var result=[];
+  for(var i=1;i<lines.length;i++){
+    var row=_parseCSVRow(lines[i]);
+    if(row.every(function(c){return!c.trim();}))continue;
+    var obj={no:i};
+    for(var j=0;j<headers.length;j++){
+      var field=_COL_MAP[headers[j]];
+      if(field)obj[field]=(row[j]||'').trim();
+    }
+    if(!obj.sabun||!obj.name)continue;
+    obj.status=_STATUS_MAP[obj.status]||obj.status||'ineligible';
+    // 누락 필드 기본값
+    ['dept','team','pos','emptype','cur','target','y23','y24','y25','challenge','submit','note']
+      .forEach(function(k){if(!obj[k])obj[k]='';});
+    result.push(obj);
+  }
+  return result;
+}
+
+/* 동기화 배지 상태 업데이트 */
+function _setSyncBadge(state,msg){
+  var el=document.getElementById('sync-badge');
+  var info=document.getElementById('admin-sync-info');
+  var styles={
+    loading:{bg:'rgba(255,255,255,0.1)',bc:'rgba(255,255,255,0.2)',col:'rgba(255,255,255,0.6)',text:'🔄 동기화 중...'},
+    ok:    {bg:'rgba(16,185,129,0.2)', bc:'rgba(16,185,129,0.4)', col:'rgba(255,255,255,0.9)',text:'✅ '+(msg||'동기화 완료')},
+    error: {bg:'rgba(239,68,68,0.2)', bc:'rgba(239,68,68,0.4)', col:'rgba(255,255,255,0.8)',text:'⚠ 오류'},
+    nourl: {bg:'rgba(245,158,11,0.2)',bc:'rgba(245,158,11,0.4)',col:'rgba(255,255,255,0.7)',text:'⚙ URL 미설정'}
+  };
+  var s=styles[state]||styles.nourl;
+  if(el){
+    el.innerHTML=s.text;
+    el.style.background=s.bg;
+    el.style.borderColor=s.bc;
+    el.style.color=s.col;
+    if(state==='error')el.title=msg||'';
+  }
+  if(info){
+    if(state==='ok')info.textContent='마지막 동기화: '+(_lastSyncTime?_lastSyncTime.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'}):'');
+    else if(state==='error')info.textContent='오류: '+(msg||'');
+    else if(state==='nourl')info.textContent='관리자 패널에서 URL을 설정하세요.';
+    else info.textContent='';
+  }
+}
+
+/* 구글시트에서 데이터 가져오기 (Apps Script → JSON) */
+function fetchSheetData(onDone){
+  _setSyncBadge('loading');
+  var url=SHEET_DATA_URL+'?_t='+Date.now();
+  fetch(url)
+    .then(function(res){
+      if(!res.ok)throw new Error('HTTP '+res.status);
+      return res.json();
+    })
+    .then(function(json){
+      if(json.error)throw new Error(json.error);
+      if(!json.data||!json.data.length)throw new Error('데이터 없음 (시트 헤더·내용 확인)');
+      var parsed=json.data.map(function(row,idx){
+        var obj={no:idx+1};
+        Object.keys(row).forEach(function(h){
+          var field=_COL_MAP[h.trim()];
+          if(field)obj[field]=String(row[h]).trim();
+        });
+        if(!obj.sabun||!obj.name)return null;
+        obj.status=_STATUS_MAP[obj.status]||obj.status||'ineligible';
+        ['dept','team','pos','emptype','cur','target','y23','y24','y25','challenge','submit','note']
+          .forEach(function(k){if(!obj[k])obj[k]='';});
+        return obj;
+      }).filter(function(o){return o!==null;});
+      if(!parsed.length)throw new Error('유효 데이터 없음 (사번·성명 컬럼 확인)');
+      DATA=parsed;
+      _lastSyncTime=new Date();
+      _syncCount++;
+      var timeStr=_lastSyncTime.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
+      _setSyncBadge('ok',timeStr+' 동기화 ('+DATA.length+'명)');
+      if(document.getElementById('page-admin').classList.contains('active')){
+        refreshDeptFilter();renderAdminStats();renderAdminTable();
+      }
+      if(document.getElementById('page-manager').classList.contains('active')){
+        renderMgrStats();renderMgrTable();
+      }
+      if(onDone)onDone(true);
+    })
+    .catch(function(err){
+      _setSyncBadge('error',err.message);
+      if(onDone)onDone(false);
+    });
+}
+
+/* 관리자 패널에서 URL 적용 */
+function applySheetUrl(){
+  var urlEl=document.getElementById('admin-sheet-url');
+  var notice=document.getElementById('sheet-url-notice');
+  var url=(urlEl?urlEl.value.trim():'');
+  if(!url){notice.style.display='block';return;}
+  notice.style.display='none';
+  SHEET_DATA_URL=url;
+  fetchSheetData(function(ok){
+    if(!ok)notice.style.display='block';
+  });
+}
+
+/* 자동 동기화 시작 */
+function startAutoSync(){
+  fetchSheetData();
+  if(_syncTimer)clearInterval(_syncTimer);
+  _syncTimer=setInterval(function(){fetchSheetData();},SYNC_INTERVAL_MS);
+}
+
+/* 페이지 로드 시 자동 시작 */
+window.addEventListener('DOMContentLoaded',function(){
+  // 관리자 패널 URL 입력창에 현재 URL 표시
+  var urlEl=document.getElementById('admin-sheet-url');
+  if(urlEl&&SHEET_DATA_URL)urlEl.value=SHEET_DATA_URL;
+  startAutoSync();
+});
+
+/* ════ 입력 양식 다운로드 ════ */
+var TEMPLATE_B64="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";
+function downloadTemplate(){
+  try{
+    var bin=atob(TEMPLATE_B64);
+    var arr=new Uint8Array(bin.length);
+    for(var i=0;i<bin.length;i++) arr[i]=bin.charCodeAt(i);
+    var blob=new Blob([arr],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement('a');
+    a.href=url; a.download='직무급_데이터_입력양식.xlsx';
+    a.style.display='none';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function(){document.body.removeChild(a); URL.revokeObjectURL(url);},1000);
+  }catch(e){alert('다운로드 실패: '+e.message);}
+}
+</script>
+</body>
+</html>
